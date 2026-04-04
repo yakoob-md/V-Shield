@@ -8,461 +8,1048 @@
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts – Tiro Devanagari Hindi (display) + Noto Sans (body) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
     /* ─── CSS Variables ───────────────────────────────────────────── */
     :root {
-      --saffron:    #FF6B00;
-      --saffron-lt: #FF8C35;
-      --green:      #138808;
-      --green-lt:   #1aaa0a;
-      --navy:       #000080;
-      --navy-lt:    #1a1a9e;
-      --cream:      #FFF8EE;
-      --card-bg:    #FFFFFF;
-      --text-main:  #1a1a2e;
-      --text-muted: #6b7280;
-      --safe:       #15803d;
-      --caution:    #b45309;
-      --banned:     #b91c1c;
-      --unknown:    #6b21a8;
+      --saffron:     #FF6B00;
+      --saffron-lt:  #FF8C35;
+      --saffron-bg:  #FFF4EA;
+      --green:       #138808;
+      --green-lt:    #1aaa0a;
+      --navy:        #000080;
+      --navy-lt:     #1a1a9e;
+      --cream:       #FDF8F2;
+      --card-bg:     #FFFFFF;
+      --text-main:   #1a1a2e;
+      --text-muted:  #6b7280;
+      --border:      #f0e0d0;
+
+      --safe-bg:     #dcfce7; --safe-fg:    #15803d; --safe-border:   #86efac;
+      --caution-bg:  #fef3c7; --caution-fg: #b45309; --caution-border:#fcd34d;
+      --banned-bg:   #fee2e2; --banned-fg:  #b91c1c; --banned-border: #fca5a5;
+      --unknown-bg:  #f3e8ff; --unknown-fg: #6b21a8; --unknown-border:#d8b4fe;
+
+      --sidebar-w: 300px;
+      --header-h:  60px;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Noto Sans', sans-serif;
       background: var(--cream);
       color: var(--text-main);
-      min-height: 100vh;
+      height: 100vh;
+      height: 100dvh; /* Mobile browser support */
+      overflow: hidden; /* Stop main window scrolling */
+      display: flex;
+      flex-direction: column;
     }
 
-    /* ─── Display font for headers ─── */
-    .font-display { font-family: 'Tiro Devanagari Hindi', serif; }
+    /* ─── Display font ─── */
+    .font-display { font-family: 'Baloo 2', cursive; }
 
-    /* ─── Tricolor accent bar ─── */
+    /* ─── Tricolor bar ─── */
     .tricolor-bar {
-      height: 5px;
+      height: 4px;
       background: linear-gradient(90deg, var(--saffron) 33.3%, #fff 33.3% 66.6%, var(--green) 66.6%);
     }
 
-    /* ─── Mic button states ─── */
-    #mic-btn {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      border: none;
+    /* ─── Layout Shell ─── */
+    #app-shell {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0; /* Ensures flex children can shrink and contain overflow */
+    }
+
+    /* ─── SIDEBAR ─── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: #fff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+    #sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    #history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .history-item {
+      border-left: 3px solid var(--saffron);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--saffron-bg);
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 8px 30px rgba(255, 107, 0, 0.35);
-      background: radial-gradient(circle at 35% 35%, var(--saffron-lt), var(--saffron));
+      transition: background 0.15s, transform 0.1s;
+      animation: fadeIn 0.3s ease;
+    }
+    .history-item:hover { background: #ffe8d0; transform: translateX(2px); }
+
+    /* ─── MAIN CHAT AREA ─── */
+    #chat-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Chat feed */
+    #chat-feed {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Chat bubbles */
+    .bubble-user {
+      align-self: flex-end;
+      max-width: 72%;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 20px 20px 4px 20px;
+      padding: 10px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      animation: slideInRight 0.3s ease;
+    }
+    .bubble-ai {
+      align-self: flex-start;
+      max-width: 82%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px 20px 20px 20px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      animation: slideInLeft 0.35s ease;
+    }
+    .bubble-ai.safe    { border-left: 4px solid var(--safe-fg);    background: #f8fff9; }
+    .bubble-ai.caution { border-left: 4px solid var(--caution-fg); background: #fffdf5; }
+    .bubble-ai.banned  { border-left: 4px solid var(--banned-fg);  background: #fff8f8; }
+    .bubble-ai.unknown { border-left: 4px solid var(--unknown-fg); background: #fdf8ff; }
+
+    /* Risk Badge */
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+    .badge-safe    { background: var(--safe-bg);    color: var(--safe-fg);    border: 1px solid var(--safe-border); }
+    .badge-caution { background: var(--caution-bg); color: var(--caution-fg); border: 1px solid var(--caution-border); }
+    .badge-banned  { background: var(--banned-bg);  color: var(--banned-fg);  border: 1px solid var(--banned-border); }
+    .badge-unknown { background: var(--unknown-bg); color: var(--unknown-fg); border: 1px solid var(--unknown-border); }
+
+    /* Typing indicator */
+    .typing-dots { display: flex; gap: 5px; align-items: center; padding: 4px 0; }
+    .typing-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--saffron);
+      animation: dotBounce 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-6px); }
+    }
+
+    /* ─── INPUT AREA ─── */
+    #input-area {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      background: #fff;
+      padding: 12px 16px;
+    }
+
+    /* Quick suggestions */
+    #suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .suggestion-chip {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--saffron-bg);
+      color: var(--saffron);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Noto Sans', sans-serif;
+    }
+    .suggestion-chip:hover { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+
+    /* Input row */
+    #input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    #text-input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: 'Noto Sans', sans-serif;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: var(--cream);
+      min-height: 44px;
+      max-height: 100px;
+      line-height: 1.5;
+    }
+    #text-input:focus {
+      border-color: var(--saffron);
+      box-shadow: 0 0 0 3px rgba(255,107,0,0.12);
+    }
+
+    /* Send button */
+    #send-btn {
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      border: none;
+      background: var(--saffron);
+      color: #fff;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      outline: none;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    #send-btn:hover:not(:disabled) { background: var(--saffron-lt); transform: scale(1.05); }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Mic button */
+    #mic-btn {
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      border: none;
+      background: #f3f4f6;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
       position: relative;
-      user-select: none;
     }
-
-    #mic-btn:hover  { transform: scale(1.06); }
-    #mic-btn:active { transform: scale(0.97); }
-
+    #mic-btn:hover { background: #e5e7eb; }
     #mic-btn.recording {
-      background: radial-gradient(circle at 35% 35%, #ff4444, #cc0000);
-      box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.6);
-      animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      background: #fee2e2;
+      color: #dc2626;
+      animation: micPulse 1.2s infinite;
+    }
+    @keyframes micPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+      50%      { box-shadow: 0 0 0 10px rgba(220,38,38,0); }
     }
 
-    @keyframes pulse-ring {
-      0%   { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.6); }
-      70%  { box-shadow: 0 0 0 20px rgba(204, 0, 0, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0); }
+    /* ─── Voice status bar ─── */
+    #voice-status-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 600;
     }
+    #voice-status-bar.visible { display: flex; }
 
-    /* ─── Risk badge colors ─── */
-    .badge-safe    { background: #dcfce7; color: var(--safe);    border: 1px solid #86efac; }
-    .badge-caution { background: #fef3c7; color: var(--caution); border: 1px solid #fcd34d; }
-    .badge-banned  { background: #fee2e2; color: var(--banned);  border: 1px solid #fca5a5; }
-    .badge-unknown { background: #f3e8ff; color: var(--unknown); border: 1px solid #d8b4fe; }
-
-    /* ─── Response card animations ─── */
-    .response-card {
-      animation: slide-up 0.35s ease both;
-    }
-
-    @keyframes slide-up {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ─── History items ─── */
-    .history-item {
-      border-left: 3px solid var(--saffron);
-      transition: background 0.15s;
-    }
-    .history-item:hover { background: #fff5ea; }
-
-    /* ─── Scrollbar ─── */
-    .scroll-area::-webkit-scrollbar { width: 5px; }
-    .scroll-area::-webkit-scrollbar-track { background: transparent; }
-    .scroll-area::-webkit-scrollbar-thumb { background: #e5c9a8; border-radius: 999px; }
-
-    /* ─── Loading spinner ─── */
-    .spinner {
-      width: 28px; height: 28px;
-      border: 3px solid #ffe0c0;
-      border-top-color: var(--saffron);
-      border-radius: 50%;
-      animation: spin 0.75s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── Waveform bars (decorative) ─── */
+    /* Waveform bars */
     .wave-bar {
-      width: 4px; border-radius: 999px;
+      width: 3px; border-radius: 999px;
       background: var(--saffron);
       transform-origin: bottom;
-      animation: wave-anim 0.8s ease-in-out infinite alternate;
+      animation: waveAnim 0.7s ease-in-out infinite alternate;
     }
+    .wave-bar:nth-child(1) { animation-delay: 0.0s; }
     .wave-bar:nth-child(2) { animation-delay: 0.1s; }
     .wave-bar:nth-child(3) { animation-delay: 0.2s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.15s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.05s; }
-    @keyframes wave-anim {
-      from { height: 6px;  opacity: 0.5; }
-      to   { height: 24px; opacity: 1.0; }
+    .wave-bar:nth-child(4) { animation-delay: 0.15s;}
+    .wave-bar:nth-child(5) { animation-delay: 0.05s;}
+    .wave-bar:nth-child(6) { animation-delay: 0.12s;}
+    .wave-bar:nth-child(7) { animation-delay: 0.08s;}
+    @keyframes waveAnim {
+      from { height: 4px; opacity: 0.5; }
+      to   { height: 20px; opacity: 1.0; }
     }
 
-    /* ─── Text input fallback ─── */
-    #text-input:focus {
-      outline: none;
-      border-color: var(--saffron);
-      box-shadow: 0 0 0 3px rgba(255,107,0,0.15);
+    /* ─── Audio player widget ─── */
+    .audio-player {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: var(--saffron-bg);
+      border-radius: 10px;
+      border: 1px solid #ffd4a8;
     }
+    .audio-player button {
+      width: 30px; height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: var(--saffron);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s;
+      flex-shrink: 0;
+    }
+    .audio-player button:hover { transform: scale(1.1); }
+    .audio-progress {
+      flex: 1;
+      height: 4px;
+      background: #ffd4a8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .audio-progress-fill {
+      height: 100%;
+      background: var(--saffron);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    /* ─── Mode toggle ─── */
+    #mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .mode-label {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .mode-label.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+    }
+
+    /* ─── Empty state ─── */
+    #empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    #empty-state .big-icon { font-size: 56px; }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5c9a8; border-radius: 999px; }
+
+    /* ─── Network status ─── */
+    #network-toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #1f2937;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 9999;
+    }
+    #network-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ─── Header ─── */
+    header {
+      height: var(--header-h);
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    #sidebar-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ─── Copy btn ─── */
+    .copy-btn {
+      background: none; border: none;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { background: #f3f4f6; color: var(--text-main); }
+
+    /* ─── Confirm dialog ─── */
+    #confirm-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirm-overlay.visible { display: flex; }
+    #confirm-box {
+      background: #fff;
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 320px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: fadeIn 0.25s ease;
+    }
+
+    /* ─── Mobile ─── */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: 0; top: 0; bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+      }
+      #sidebar.open { transform: translateX(0); box-shadow: 4px 0 30px rgba(0,0,0,0.15); }
+      #sidebar-toggle { display: flex; }
+      .bubble-user { max-width: 90%; }
+      .bubble-ai   { max-width: 95%; }
+      #sidebar { padding-top: var(--header-h); }
+    }
+
+    /* ─── Offline indicator ─── */
+    .offline-pill {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid #fca5a5;
+    }
+    body.offline .offline-pill { display: flex; }
+    .offline-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #dc2626;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   </style>
 </head>
 
-<body class="flex flex-col min-h-screen">
+<body>
 
-  <!-- ── Tricolor accent ── -->
-  <div class="tricolor-bar w-full"></div>
+  <!-- ── Tricolor bar ── -->
+  <div class="tricolor-bar"></div>
 
-  <!-- ══════════════ HEADER ══════════════ -->
-  <header class="bg-white shadow-sm sticky top-0 z-10">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <!-- Chakra emblem placeholder -->
-        <div class="w-10 h-10 rounded-full bg-[--navy] flex items-center justify-center flex-shrink-0"
-             style="background:var(--navy)">
-          <svg viewBox="0 0 40 40" class="w-8 h-8" fill="none">
-            <circle cx="20" cy="20" r="8" stroke="#fff" stroke-width="2"/>
-            <circle cx="20" cy="20" r="3" fill="#fff"/>
-            <!-- spokes -->
-            <g stroke="#fff" stroke-width="1.2">
-              <line x1="20" y1="5"  x2="20" y2="12"/>
-              <line x1="20" y1="28" x2="20" y2="35"/>
-              <line x1="5"  y1="20" x2="12" y2="20"/>
-              <line x1="28" y1="20" x2="35" y2="20"/>
-              <line x1="9.4" y1="9.4" x2="14.3" y2="14.3"/>
-              <line x1="25.7" y1="25.7" x2="30.6" y2="30.6"/>
-              <line x1="30.6" y1="9.4" x2="25.7" y2="14.3"/>
-              <line x1="14.3" y1="25.7" x2="9.4" y2="30.6"/>
-            </g>
-          </svg>
-        </div>
-        <div>
-          <h1 class="font-display text-lg leading-tight" style="color:var(--navy)">
-            Clean Sport सहायक
-          </h1>
-          <p class="text-xs" style="color:var(--text-muted)">Anti-Doping · Rural Athletes</p>
-        </div>
-      </div>
-      <span class="text-xs font-semibold px-2 py-1 rounded-full"
-            style="background:#e8f5e9;color:var(--green)">
-        🇮🇳 NADA Aligned
-      </span>
+  <!-- ══════════ HEADER ══════════ -->
+  <header>
+    <!-- Mobile sidebar toggle -->
+    <button id="sidebar-toggle" title="Toggle History">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <!-- Logo -->
+    <div style="background:var(--navy);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg viewBox="0 0 40 40" width="26" height="26" fill="none">
+        <circle cx="20" cy="20" r="8" stroke="#fff" stroke-width="2"/>
+        <circle cx="20" cy="20" r="3" fill="#fff"/>
+        <g stroke="#fff" stroke-width="1.2">
+          <line x1="20" y1="5"  x2="20" y2="12"/>
+          <line x1="20" y1="28" x2="20" y2="35"/>
+          <line x1="5"  y1="20" x2="12" y2="20"/>
+          <line x1="28" y1="20" x2="35" y2="20"/>
+          <line x1="9.4" y1="9.4" x2="14.3" y2="14.3"/>
+          <line x1="25.7" y1="25.7" x2="30.6" y2="30.6"/>
+          <line x1="30.6" y1="9.4" x2="25.7" y2="14.3"/>
+          <line x1="14.3" y1="25.7" x2="9.4" y2="30.6"/>
+        </g>
+      </svg>
+    </div>
+
+    <div style="flex:1;">
+      <h1 class="font-display" style="color:var(--navy);font-size:17px;font-weight:800;line-height:1.2;">Clean Sport सहायक</h1>
+      <p style="font-size:11px;color:var(--text-muted);">Anti-Doping · Rural Athletes</p>
+    </div>
+
+    <!-- Offline badge -->
+    <div class="offline-pill">
+      <div class="offline-dot"></div> Offline
+    </div>
+
+    <!-- Mode indicator -->
+    <div id="lang-mode" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:#e8f5e9;color:var(--green);">
+      🇮🇳 NADA Aligned
     </div>
   </header>
 
-  <!-- ══════════════ MAIN LAYOUT ══════════════ -->
-  <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col lg:flex-row gap-6">
+  <!-- ══════════ APP SHELL ══════════ -->
+  <div id="app-shell">
 
-    <!-- ── LEFT: Mic Panel ── -->
-    <section class="flex-1 flex flex-col gap-5">
-
-      <!-- Mic card -->
-      <div class="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 flex flex-col items-center gap-4">
-        <p class="font-display text-xl text-center" style="color:var(--navy)">
-          आपका सवाल पूछो 🎙️
-        </p>
-        <p class="text-sm text-center" style="color:var(--text-muted)">
-          Mic dabao aur bolo – koi bhi supplement ya medicine ke baare mein
-        </p>
-
-        <!-- Waveform (visible while recording) -->
-        <div id="waveform" class="hidden items-center gap-1 h-8">
-          <div class="wave-bar h-3"></div>
-          <div class="wave-bar h-5"></div>
-          <div class="wave-bar h-6"></div>
-          <div class="wave-bar h-4"></div>
-          <div class="wave-bar h-3"></div>
-        </div>
-
-        <!-- Mic button -->
-        <button id="mic-btn" title="Press and hold to record">
-          <!-- Mic SVG icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-               fill="white" class="w-10 h-10 pointer-events-none">
-            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
-            <path d="M19 10a1 1 0 0 1 2 0 9 9 0 0 1-18 0 1 1 0 0 1 2 0 7 7 0 0 0 14 0z"/>
-            <path d="M12 19v4m-3 0h6" stroke="white" stroke-width="1.5"
-                  stroke-linecap="round" fill="none"/>
-          </svg>
+    <!-- ─── SIDEBAR ─── -->
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <div class="font-display" style="color:var(--navy);font-size:15px;font-weight:700;">💬 Purani Baatein</div>
+        <button id="clear-btn" style="font-size:12px;padding:4px 10px;border-radius:8px;border:none;background:#fee2e2;color:var(--banned-fg);font-weight:600;cursor:pointer;transition:background 0.15s;">
+          🗑 Clear
         </button>
-
-        <p id="mic-status" class="text-sm font-semibold" style="color:var(--saffron)">
-          Dabao aur bolo…
+      </div>
+      <div id="history-list">
+        <p id="history-empty" style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:13px;">
+          Abhi koi sawaal nahi poocha 🙂
         </p>
-
-        <!-- Divider -->
-        <div class="w-full flex items-center gap-3">
-          <div class="flex-1 h-px bg-orange-100"></div>
-          <span class="text-xs" style="color:var(--text-muted)">ya text type karo</span>
-          <div class="flex-1 h-px bg-orange-100"></div>
-        </div>
-
-        <!-- Text fallback input -->
-        <div class="w-full flex gap-2">
-          <input id="text-input" type="text"
-                 placeholder="e.g. Kya ashwagandha safe hai?"
-                 class="flex-1 border border-orange-200 rounded-xl px-4 py-2 text-sm
-                        transition-all duration-200"
-                 style="background:#fffbf7" />
-          <button id="text-send-btn"
-                  class="px-4 py-2 rounded-xl text-white text-sm font-semibold
-                         transition-all duration-200 active:scale-95"
-                  style="background:var(--saffron)">
-            भेजो
-          </button>
-        </div>
-      </div>
-
-      <!-- Response card -->
-      <div id="response-area" class="hidden"></div>
-
-      <!-- Loading indicator -->
-      <div id="loading" class="hidden flex-col items-center gap-2 py-6">
-        <div class="spinner"></div>
-        <p class="text-sm" style="color:var(--text-muted)">Samajh raha hoon…</p>
-      </div>
-
-    </section>
-
-    <!-- ── RIGHT: Chat History Panel ── -->
-    <aside class="w-full lg:w-80 flex flex-col gap-4">
-      <div class="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden flex flex-col"
-           style="max-height:600px">
-
-        <!-- Panel header -->
-        <div class="px-4 py-3 flex items-center justify-between border-b border-orange-100">
-          <h2 class="font-semibold text-sm" style="color:var(--navy)">
-            💬 Purani Baatein
-          </h2>
-          <button id="clear-btn"
-                  class="text-xs px-2 py-1 rounded-lg transition-colors duration-150"
-                  style="color:var(--banned);background:#fee2e2">
-            Clear
-          </button>
-        </div>
-
-        <!-- History list -->
-        <div id="history-list" class="flex-1 overflow-y-auto scroll-area px-3 py-2 flex flex-col gap-2">
-          <!-- Injected by JS -->
-          <p id="history-empty" class="text-sm text-center py-8" style="color:var(--text-muted)">
-            Abhi koi sawaal nahi poocha. 🙂
-          </p>
-        </div>
-
       </div>
     </aside>
 
-  </main>
+    <!-- ─── MAIN CHAT ─── -->
+    <div id="chat-main">
 
-  <!-- ══════════════ FOOTER ══════════════ -->
-  <footer class="py-3 text-center text-xs" style="color:var(--text-muted)">
-    Sirf supplements aur medicines ki jankari ke liye · NADA Helpline: 1800-11-9979
-  </footer>
+      <!-- Chat feed -->
+      <div id="chat-feed">
+        <!-- Empty state (shown before first message) -->
+        <div id="empty-state">
+          <div class="big-icon">🏋️</div>
+          <p class="font-display" style="font-size:20px;font-weight:700;color:var(--navy);">Namaste, Khiladi!</p>
+          <p style="font-size:14px;max-width:280px;line-height:1.6;">
+            Koi bhi supplement ya medicine ke baare mein pooch sakte ho — main tumhe safe rehne mein help karunga.
+          </p>
+          <p style="font-size:12px;margin-top:4px;color:#9ca3af;">Voice ya text dono chal ta hai 🎙️</p>
+        </div>
+      </div>
+
+      <!-- ─── INPUT AREA ─── -->
+      <div id="input-area">
+
+        <!-- Voice status bar (shown during recording / processing) -->
+        <div id="voice-status-bar">
+          <div style="display:flex;gap:3px;align-items:center;" id="waveform-bars">
+            <div class="wave-bar" style="height:8px;"></div>
+            <div class="wave-bar" style="height:14px;"></div>
+            <div class="wave-bar" style="height:18px;"></div>
+            <div class="wave-bar" style="height:12px;"></div>
+            <div class="wave-bar" style="height:20px;"></div>
+            <div class="wave-bar" style="height:10px;"></div>
+            <div class="wave-bar" style="height:16px;"></div>
+          </div>
+          <span id="voice-status-text">Listening...</span>
+          <span id="voice-stage-icon" style="margin-left:auto;">🎙️</span>
+        </div>
+
+        <!-- Quick suggestions -->
+        <div id="suggestions">
+          <button class="suggestion-chip" data-q="Whey protein safe hai kya?">💪 Whey protein safe hai?</button>
+          <button class="suggestion-chip" data-q="Kya painkiller le sakta hoon test se pehle?">💊 Painkiller le sakta hoon?</button>
+          <button class="suggestion-chip" data-q="Creatine allowed hai kya WADA mein?">⚡ Creatine allowed hai?</button>
+          <button class="suggestion-chip" data-q="Ashwagandha se doping test fail ho sakta hai?">🌿 Ashwagandha safe hai?</button>
+          <button class="suggestion-chip" data-q="Local protein powder safe hai kya?">🛒 Local protein powder?</button>
+        </div>
+
+        <!-- Input row -->
+        <div id="input-row">
+          <textarea id="text-input" rows="1"
+            placeholder="Kuch bhi pooch lo – supplement ya medicine ke baare mein…"
+          ></textarea>
+          <button id="mic-btn" title="Hold to record voice">
+            <!-- Mic icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+              <path d="M19 10a1 1 0 0 1 2 0 9 9 0 0 1-18 0 1 1 0 0 1 2 0 7 7 0 0 0 14 0z"/>
+              <path d="M12 19v4m-3 0h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            </svg>
+          </button>
+          <button id="send-btn" title="Send" disabled>
+            <!-- Send icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Footer note -->
+        <p style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px;">
+          Sirf guidance hai · Doctor se confirm karo · NADA Helpline: 1800-11-9979
+        </p>
+
+      </div><!-- /input-area -->
+    </div><!-- /chat-main -->
+  </div><!-- /app-shell -->
+
+  <!-- ── Network toast ── -->
+  <div id="network-toast">📡 Connecting...</div>
+
+  <!-- ── Confirm dialog ── -->
+  <div id="confirm-overlay">
+    <div id="confirm-box">
+      <p style="font-size:28px;margin-bottom:8px;">🗑️</p>
+      <p class="font-display" style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;">Sab baatein delete karein?</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Yeh action undo nahi hoga.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="confirm-no"  style="padding:8px 22px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer;font-weight:600;font-size:13px;">Ruko</button>
+        <button id="confirm-yes" style="padding:8px 22px;border-radius:10px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-weight:700;font-size:13px;">Haan, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile overlay to close sidebar -->
+  <div id="sidebar-overlay" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.3);" onclick="closeSidebar()"></div>
 
   <!-- ══════════════ JAVASCRIPT ══════════════ -->
   <script>
   (() => {
     "use strict";
 
-    // ── Config ────────────────────────────────────────────────────────────────
+    // ─── Config ───────────────────────────────────────────────────────────────
     const API_BASE = "http://localhost:8000";
 
-    // ── DOM refs ─────────────────────────────────────────────────────────────
-    const micBtn        = document.getElementById("mic-btn");
-    const micStatus     = document.getElementById("mic-status");
-    const waveform      = document.getElementById("waveform");
-    const responseArea  = document.getElementById("response-area");
-    const loadingEl     = document.getElementById("loading");
-    const historyList   = document.getElementById("history-list");
-    const historyEmpty  = document.getElementById("history-empty");
-    const clearBtn      = document.getElementById("clear-btn");
-    const textInput     = document.getElementById("text-input");
-    const textSendBtn   = document.getElementById("text-send-btn");
+    // ─── DOM refs ─────────────────────────────────────────────────────────────
+    const chatFeed        = document.getElementById("chat-feed");
+    const emptyState      = document.getElementById("empty-state");
+    const historyList     = document.getElementById("history-list");
+    const historyEmpty    = document.getElementById("history-empty");
+    const clearBtn        = document.getElementById("clear-btn");
+    const textInput       = document.getElementById("text-input");
+    const sendBtn         = document.getElementById("send-btn");
+    const micBtn          = document.getElementById("mic-btn");
+    const voiceStatusBar  = document.getElementById("voice-status-bar");
+    const voiceStatusText = document.getElementById("voice-status-text");
+    const voiceStageIcon  = document.getElementById("voice-stage-icon");
+    const networkToast    = document.getElementById("network-toast");
+    const confirmOverlay  = document.getElementById("confirm-overlay");
+    const confirmYes      = document.getElementById("confirm-yes");
+    const confirmNo       = document.getElementById("confirm-no");
+    const sidebarEl       = document.getElementById("sidebar");
+    const sidebarOverlay  = document.getElementById("sidebar-overlay");
+    const sidebarToggle   = document.getElementById("sidebar-toggle");
+    const langMode        = document.getElementById("lang-mode");
 
-    // ── MediaRecorder state ───────────────────────────────────────────────────
-    let mediaRecorder = null;
-    let audioChunks   = [];
-    let isRecording   = false;
-    let stream        = null;
+    // ─── MediaRecorder state ──────────────────────────────────────────────────
+    let mediaRecorder  = null;
+    let audioChunks    = [];
+    let isRecording    = false;
+    let stream         = null;
+    let currentAudio   = null; // active Audio object for replay
+    let currentAudioUrl = null;
 
     // ══════════════════════════════════════════════════════════════════════════
-    // UTILITY: Risk badge
+    // NETWORK STATUS
     // ══════════════════════════════════════════════════════════════════════════
-    function riskBadge(responseText) {
-      if (/BANNED|❌/i.test(responseText))
-        return '<span class="badge-banned px-2 py-0.5 rounded-full text-xs font-bold">BANNED ❌</span>';
-      if (/CAUTION|⚠️/i.test(responseText))
-        return '<span class="badge-caution px-2 py-0.5 rounded-full text-xs font-bold">CAUTION ⚠️</span>';
-      if (/SAFE|✅/i.test(responseText))
-        return '<span class="badge-safe px-2 py-0.5 rounded-full text-xs font-bold">SAFE ✅</span>';
-      if (/UNKNOWN|❓/i.test(responseText))
-        return '<span class="badge-unknown px-2 py-0.5 rounded-full text-xs font-bold">UNKNOWN ❓</span>';
-      return '<span class="badge-caution px-2 py-0.5 rounded-full text-xs font-bold">CAUTION ⚠️</span>';
+    function updateOnlineStatus() {
+      document.body.classList.toggle("offline", !navigator.onLine);
+    }
+    window.addEventListener("online",  updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // TOAST
+    // ══════════════════════════════════════════════════════════════════════════
+    function showToast(msg, duration = 2500) {
+      networkToast.textContent = msg;
+      networkToast.classList.add("visible");
+      setTimeout(() => networkToast.classList.remove("visible"), duration);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    // RENDER: Main response card
+    // SIDEBAR MOBILE TOGGLE
     // ══════════════════════════════════════════════════════════════════════════
-    function renderResponse(userQuery, aiResponse) {
-      if (!userQuery && !aiResponse) return; // Prevent empty renders
-      
-      responseArea.classList.remove("hidden");
-      responseArea.classList.add("flex", "flex-col", "gap-4");
-
-      // Append user bubble + AI card
-      const cardHtml = `
-        <div class="response-card bg-white rounded-2xl shadow-sm border border-orange-100 p-5">
-          <!-- User bubble -->
-          <div class="flex items-start gap-2 mb-3">
-            <span class="text-lg">🙋</span>
-            <p class="text-sm font-semibold" style="color:var(--navy)">${escHtml(userQuery)}</p>
-          </div>
-          <hr class="border-orange-100 mb-3"/>
-          <!-- AI response -->
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-base">🤖</span>
-            ${riskBadge(aiResponse)}
-          </div>
-          <p class="text-sm leading-relaxed" style="color:var(--text-main)">${escHtml(aiResponse)}</p>
-          <p class="mt-3 text-xs" style="color:var(--text-muted)">
-            ⚠️ Yeh sirf guidance hai – doctor ya certified expert se confirm karo.
-          </p>
-        </div>`;
-      
-      responseArea.insertAdjacentHTML("beforeend", cardHtml);
-
-      // Scroll to show latest message
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
+    window.closeSidebar = function() {
+      sidebarEl.classList.remove("open");
+      sidebarOverlay.style.display = "none";
+    };
+    sidebarToggle.addEventListener("click", () => {
+      const isOpen = sidebarEl.classList.contains("open");
+      sidebarEl.classList.toggle("open", !isOpen);
+      sidebarOverlay.style.display = isOpen ? "none" : "block";
+    });
 
     // ══════════════════════════════════════════════════════════════════════════
-    // RENDER: History list
+    // AUTO-RESIZE TEXTAREA
     // ══════════════════════════════════════════════════════════════════════════
-    function renderHistory(items) {
-      if (!items || items.length === 0) {
-        historyEmpty.classList.remove("hidden");
-        return;
-      }
-      historyEmpty.classList.add("hidden");
-      historyList.innerHTML = "";
+    textInput.addEventListener("input", () => {
+      // Enable / disable send button
+      sendBtn.disabled = textInput.value.trim().length === 0;
+      // Auto-resize
+      textInput.style.height = "auto";
+      textInput.style.height = Math.min(textInput.scrollHeight, 100) + "px";
+    });
 
-      items.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "history-item bg-orange-50 rounded-xl px-3 py-2 cursor-default";
-        div.innerHTML = `
-          <p class="text-xs font-semibold truncate" style="color:var(--navy)">
-            🙋 ${escHtml(item.user_query)}
-          </p>
-          <p class="text-xs mt-1 line-clamp-2" style="color:var(--text-muted)">
-            ${riskBadge(item.ai_response)} ${escHtml(item.ai_response.slice(0, 80))}…
-          </p>
-          <p class="text-xs mt-1" style="color:var(--text-muted); font-size:10px">
-            ${new Date(item.timestamp).toLocaleString("en-IN")}
-          </p>`;
-        historyList.appendChild(div);
-      });
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // API: Fetch history
-    // ══════════════════════════════════════════════════════════════════════════
-    async function fetchHistory() {
-      try {
-        const res  = await fetch(`${API_BASE}/history`);
-        const data = await res.json();
-        renderHistory(data.history || []);
-      } catch {
-        // Backend not running – show empty state silently
-        historyEmpty.classList.remove("hidden");
-      }
-    }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // API: Clear history
-    // ══════════════════════════════════════════════════════════════════════════
-    clearBtn.addEventListener("click", async () => {
-      if (!confirm("Sab purani baatein delete karein?")) return;
-      try {
-        await fetch(`${API_BASE}/history`, { method: "DELETE" });
-        historyList.innerHTML = "";
-        historyEmpty.classList.remove("hidden");
-        responseArea.classList.add("hidden");
-      } catch {
-        alert("Server se connect nahi ho paya. Backend chalu hai?");
+    textInput.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled) sendBtn.click();
       }
     });
 
     // ══════════════════════════════════════════════════════════════════════════
-    // API: Submit query (voice blob or text)
+    // QUICK SUGGESTION CHIPS
+    // ══════════════════════════════════════════════════════════════════════════
+    document.querySelectorAll(".suggestion-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const q = chip.dataset.q;
+        submitTextQuery(q);
+      });
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SEND (text)
+    // ══════════════════════════════════════════════════════════════════════════
+    sendBtn.addEventListener("click", () => {
+      const q = textInput.value.trim();
+      if (!q) return;
+      textInput.value = "";
+      textInput.style.height = "auto";
+      sendBtn.disabled = true;
+      submitTextQuery(q);
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RISK UTILITIES
+    // ══════════════════════════════════════════════════════════════════════════
+    function detectRisk(text) {
+      if (/BANNED|❌/i.test(text))  return "banned";
+      if (/CAUTION|⚠️/i.test(text)) return "caution";
+      if (/SAFE|✅/i.test(text))    return "safe";
+      if (/UNKNOWN|❓/i.test(text)) return "unknown";
+      return "caution"; // default cautious
+    }
+
+    function riskBadgeHtml(risk) {
+      const map = {
+        safe:    { cls: "badge-safe",    label: "SAFE ✅" },
+        caution: { cls: "badge-caution", label: "CAUTION ⚠️" },
+        banned:  { cls: "badge-banned",  label: "BANNED ❌" },
+        unknown: { cls: "badge-unknown", label: "UNKNOWN ❓" },
+      };
+      const r = map[risk] || map.caution;
+      return `<span class="risk-badge ${r.cls}">${r.label}</span>`;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDER CHAT MESSAGES
+    // ══════════════════════════════════════════════════════════════════════════
+    function hideEmptyState() {
+      if (emptyState) emptyState.style.display = "none";
+    }
+
+    function appendUserBubble(text) {
+      hideEmptyState();
+      const div = document.createElement("div");
+      div.className = "bubble-user";
+      div.textContent = text;
+      chatFeed.appendChild(div);
+      scrollToBottom();
+    }
+
+    function appendTypingIndicator() {
+      const div = document.createElement("div");
+      div.className = "bubble-ai";
+      div.id = "typing-indicator";
+      div.innerHTML = `
+        <div class="typing-dots">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+        <span style="font-size:12px;color:var(--text-muted);">Soch raha hoon…</span>`;
+      chatFeed.appendChild(div);
+      scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById("typing-indicator");
+      if (el) el.remove();
+    }
+
+    function appendAIBubble(aiResponse, audioHex = null) {
+      removeTypingIndicator();
+      const risk = detectRisk(aiResponse);
+      const div  = document.createElement("div");
+      div.className = `bubble-ai ${risk}`;
+
+      // Generate unique id for audio player
+      const uid = "audio-" + Date.now();
+
+      let audioPlayerHtml = "";
+      if (audioHex) {
+        audioPlayerHtml = `
+          <div class="audio-player" id="${uid}">
+            <button class="play-btn" title="Play / Pause">▶</button>
+            <div class="audio-progress"><div class="audio-progress-fill"></div></div>
+            <span style="font-size:11px;color:var(--saffron);font-weight:600;">🔊 Jawab sunlo</span>
+          </div>`;
+      }
+
+      div.innerHTML = `
+        ${riskBadgeHtml(risk)}
+        <p style="font-size:14px;line-height:1.65;color:var(--text-main);">${escHtml(aiResponse)}</p>
+        ${audioPlayerHtml}
+        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;">
+          <button class="copy-btn" data-text="${escAttr(aiResponse)}">📋 Copy</button>
+          <span style="font-size:10px;color:var(--text-muted);">⚠️ Certified expert se confirm karo</span>
+        </div>`;
+
+      chatFeed.appendChild(div);
+
+      // Wire up audio player if present
+      if (audioHex) {
+        setupAudioPlayer(uid, audioHex);
+        // Auto-play
+        autoPlayAudio(audioHex);
+      }
+
+      // Wire copy button
+      div.querySelector(".copy-btn").addEventListener("click", function() {
+        navigator.clipboard.writeText(this.dataset.text).then(() => {
+          this.textContent = "✅ Copied!";
+          setTimeout(() => this.textContent = "📋 Copy", 2000);
+        });
+      });
+
+      scrollToBottom();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // AUDIO HELPERS
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Converts hex-encoded audio string (from backend) into Uint8Array bytes.
+     */
+    function hexToBytes(hex) {
+      const bytes = new Uint8Array(hex.length / 2);
+      for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+      }
+      return bytes;
+    }
+
+    function hexToObjectUrl(hex) {
+      const bytes = hexToBytes(hex);
+      const blob  = new Blob([bytes], { type: "audio/mpeg" });
+      return URL.createObjectURL(blob);
+    }
+
+    function autoPlayAudio(hex) {
+      try {
+        const url = hexToObjectUrl(hex);
+        if (currentAudio) { currentAudio.pause(); URL.revokeObjectURL(currentAudioUrl); }
+        currentAudio    = new Audio(url);
+        currentAudioUrl = url;
+        currentAudio.onended = () => URL.revokeObjectURL(url);
+        currentAudio.play().catch(e => console.warn("Autoplay blocked:", e.message));
+      } catch (e) {
+        console.warn("Audio play failed:", e.message);
+      }
+    }
+
+    function setupAudioPlayer(containerId, hex) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const playBtn      = container.querySelector(".play-btn");
+      const progressFill = container.querySelector(".audio-progress-fill");
+
+      let localAudio = null;
+      let localUrl   = null;
+      let playing    = false;
+
+      function createAudio() {
+        localUrl   = hexToObjectUrl(hex);
+        localAudio = new Audio(localUrl);
+        localAudio.ontimeupdate = () => {
+          if (localAudio.duration) {
+            progressFill.style.width = (localAudio.currentTime / localAudio.duration * 100) + "%";
+          }
+        };
+        localAudio.onended = () => {
+          playing = false;
+          playBtn.textContent = "▶";
+          progressFill.style.width = "0%";
+        };
+      }
+
+      playBtn.addEventListener("click", () => {
+        if (!localAudio) createAudio();
+        if (playing) {
+          localAudio.pause();
+          playBtn.textContent = "▶";
+          playing = false;
+        } else {
+          localAudio.play().catch(e => console.warn(e));
+          playBtn.textContent = "⏸";
+          playing = true;
+        }
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // VOICE STATUS BAR
+    // ══════════════════════════════════════════════════════════════════════════
+    const STAGES = {
+      listening:  { text: "Listening…", icon: "🎙️" },
+      processing: { text: "Processing…", icon: "⚙️" },
+      thinking:   { text: "Thinking…", icon: "🧠" },
+      speaking:   { text: "Speaking…", icon: "🔊" },
+      hidden:     null,
+    };
+
+    function setVoiceStage(stage) {
+      if (stage === "hidden") {
+        voiceStatusBar.classList.remove("visible");
+        return;
+      }
+      const s = STAGES[stage];
+      if (!s) return;
+      voiceStatusText.textContent = s.text;
+      voiceStageIcon.textContent  = s.icon;
+      voiceStatusBar.classList.add("visible");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // API: Submit voice
     // ══════════════════════════════════════════════════════════════════════════
     async function submitVoiceQuery(audioBlob) {
-      showLoading(true);
+      setVoiceStage("processing");
       try {
         const form = new FormData();
         form.append("audio", audioBlob, "recording.webm");
         const res = await fetch(`${API_BASE}/verify`, { method: "POST", body: form });
         if (!res.ok) throw new Error(`Server error ${res.status}`);
+        setVoiceStage("thinking");
         const data = await res.json();
 
-        // Voice endpoint returns audio – play it securely
-        if (data.audio_base64) {
-          playAudioResponse(data.audio_base64);
+        // ✅ FIX: Show user bubble FIRST
+        if (data.user_query) appendUserBubble(data.user_query);
+
+        // ✅ FIX: Then show AI response with audio
+        if (data.ai_response) {
+          appendAIBubble(data.ai_response, data.audio_base64 || null);
         }
 
-        // ✅ Render response IN CHAT UI manually so the user sees it immediately
-        renderResponse(data.user_query, data.ai_response);
+        // Update lang mode indicator
+        updateLangMode(data.ai_response);
 
-        // Refresh sidebar history strictly after rendering UI
-        setTimeout(() => fetchHistory(), 100);
+        // ✅ FIX: Update history AFTER rendering UI
+        setTimeout(() => fetchHistory(), 200);
+
+        if (data.audio_base64) setVoiceStage("speaking");
+        setTimeout(() => setVoiceStage("hidden"), 3000);
+
       } catch (err) {
-        renderFallbackError(err.message);
+        appendError(err.message);
       } finally {
-        showLoading(false);
-        micStatus.textContent = "Dabao aur bolo…";
+        setVoiceStage("hidden");
       }
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    // API: Submit text
+    // ══════════════════════════════════════════════════════════════════════════
     async function submitTextQuery(query) {
-      showLoading(true);
+      if (!query.trim()) return;
+
+      // ✅ FIX: Show user bubble immediately, before API call
+      appendUserBubble(query);
+      appendTypingIndicator();
+
       try {
+        if (!navigator.onLine) {
+          showToast("📡 Offline – Retry when connected", 3000);
+          removeTypingIndicator();
+          return;
+        }
+
         const res = await fetch(`${API_BASE}/verify-text`, {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
@@ -471,15 +1058,53 @@
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
 
-        // ✅ Render response IN CHAT UI immediately – append it to the feed
-        renderResponse(data.user_query, data.ai_response);
+        // ✅ FIX: Show response BEFORE history update
+        if (data.ai_response) appendAIBubble(data.ai_response);
 
-        // Refresh sidebar history strictly after rendering UI
-        setTimeout(() => fetchHistory(), 100);
+        updateLangMode(data.ai_response);
+
+        // ✅ FIX: History updated AFTER rendering
+        setTimeout(() => fetchHistory(), 200);
+
       } catch (err) {
-        renderFallbackError(err.message);
-      } finally {
-        showLoading(false);
+        appendError(err.message);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ERROR BUBBLE
+    // ══════════════════════════════════════════════════════════════════════════
+    function appendError(msg) {
+      removeTypingIndicator();
+      const div = document.createElement("div");
+      div.className = "bubble-ai banned";
+      div.innerHTML = `
+        <span class="risk-badge badge-banned">ERROR ❌</span>
+        <p style="font-size:14px;color:#b91c1c;">Server se connect nahi ho paya.</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">${escHtml(msg)}</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+          Backend start karo: <code style="background:#fee2e2;padding:1px 5px;border-radius:4px;">uvicorn main:app --reload</code>
+        </p>`;
+      chatFeed.appendChild(div);
+      scrollToBottom();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // LANG MODE INDICATOR
+    // ══════════════════════════════════════════════════════════════════════════
+    function updateLangMode(text) {
+      if (!text) return;
+      // Detect if response is predominantly English (no Hindi chars)
+      const hasHindi = /[\u0900-\u097F]/.test(text);
+      const looksEnglish = !hasHindi && !/bhai|karo|hai|nahi|kya|le|safe|aur/i.test(text);
+      if (looksEnglish) {
+        langMode.textContent = "🌐 English Mode";
+        langMode.style.background = "#dbeafe";
+        langMode.style.color      = "#1d4ed8";
+      } else {
+        langMode.textContent = "🌐 Hinglish Mode";
+        langMode.style.background = "#e8f5e9";
+        langMode.style.color      = "var(--green)";
       }
     }
 
@@ -489,7 +1114,7 @@
     async function startRecording() {
       if (isRecording) return;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream        = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioChunks   = [];
         mediaRecorder = new MediaRecorder(stream);
         mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
@@ -501,11 +1126,9 @@
         mediaRecorder.start();
         isRecording = true;
         micBtn.classList.add("recording");
-        micStatus.textContent = "Bol raha hoon… (chhodo to ruk jayega)";
-        waveform.classList.remove("hidden");
-        waveform.classList.add("flex");
+        setVoiceStage("listening");
       } catch {
-        alert("Microphone access ki zaroorat hai. Browser settings check karo.");
+        showToast("🎙️ Microphone access chahiye – browser settings check karo", 4000);
       }
     }
 
@@ -514,85 +1137,108 @@
       mediaRecorder.stop();
       isRecording = false;
       micBtn.classList.remove("recording");
-      micStatus.textContent = "Processing…";
-      waveform.classList.add("hidden");
-      waveform.classList.remove("flex");
+      setVoiceStage("processing");
     }
 
-    // Press-and-hold for mouse
+    // Mouse events (press & hold)
     micBtn.addEventListener("mousedown",  startRecording);
     micBtn.addEventListener("mouseup",    stopRecording);
     micBtn.addEventListener("mouseleave", stopRecording);
 
-    // Press-and-hold for touch (mobile)
+    // Touch events (mobile press & hold)
     micBtn.addEventListener("touchstart", e => { e.preventDefault(); startRecording(); }, { passive: false });
     micBtn.addEventListener("touchend",   e => { e.preventDefault(); stopRecording();  }, { passive: false });
 
     // ══════════════════════════════════════════════════════════════════════════
-    // TEXT INPUT
+    // HISTORY
     // ══════════════════════════════════════════════════════════════════════════
-    textSendBtn.addEventListener("click", () => {
-      const q = textInput.value.trim();
-      if (!q) return;
-      textInput.value = "";
-      submitTextQuery(q);
-    });
-
-    textInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") textSendBtn.click();
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // HELPERS
-    // ══════════════════════════════════════════════════════════════════════════
-    function showLoading(show) {
-      loadingEl.classList.toggle("hidden",  !show);
-      loadingEl.classList.toggle("flex",     show);
-      if (show) responseArea.classList.add("hidden");
-      micStatus.textContent = show ? "Samajh raha hoon…" : "Dabao aur bolo…";
-    }
-
-    /**
-     * Decodes hex-encoded audio bytes from backend and plays via Web Audio API.
-     * Falls back silently if browser cannot play MP3.
-     */
-    function playAudioResponse(hexString) {
+    async function fetchHistory() {
       try {
-        const bytes = new Uint8Array(
-          hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
-        );
-        const blob = new Blob([bytes], { type: "audio/mpeg" });
-        const url  = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.onended = () => URL.revokeObjectURL(url);
-        audio.play().catch(err => {
-          console.warn("Audio playback blocked by browser:", err.message);
-        });
-        micStatus.textContent = "Jawab sun lo… 🔊";
-      } catch (err) {
-        console.warn("playAudioResponse failed:", err.message);
+        const res  = await fetch(`${API_BASE}/history`);
+        const data = await res.json();
+        renderHistory(data.history || []);
+      } catch {
+        historyEmpty.classList.remove("hidden");
       }
     }
 
-    function renderFallbackError(msg) {
-      responseArea.classList.remove("hidden");
-      responseArea.innerHTML = `
-        <div class="response-card bg-red-50 border border-red-200 rounded-2xl p-5">
-          <p class="font-semibold text-sm text-red-700">⚠️ Server se connect nahi ho paya</p>
-          <p class="text-xs text-red-500 mt-1">${escHtml(msg)}</p>
-          <p class="text-xs text-red-500 mt-2">
-            Backend chalu karo: <code class="bg-red-100 px-1 rounded">uvicorn main:app --reload</code>
+    function renderHistory(items) {
+      if (!items || items.length === 0) {
+        historyEmpty.style.display = "block";
+        // Clear only history items, not the empty state p
+        Array.from(historyList.querySelectorAll(".history-item")).forEach(el => el.remove());
+        return;
+      }
+      historyEmpty.style.display = "none";
+      // Only re-render if count changed to avoid flicker
+      const existingCount = historyList.querySelectorAll(".history-item").length;
+      if (existingCount === items.length) return;
+
+      Array.from(historyList.querySelectorAll(".history-item")).forEach(el => el.remove());
+
+      items.forEach(item => {
+        const risk = detectRisk(item.ai_response);
+        const div  = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <p style="font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            🙋 ${escHtml(item.user_query)}
           </p>
-        </div>`;
-      micStatus.textContent = "Dobara try karo…";
+          <p style="font-size:11px;color:var(--text-muted);margin-top:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+            ${escHtml(item.ai_response.slice(0, 90))}…
+          </p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+            <span class="risk-badge ${`badge-${risk}`}" style="font-size:9px;padding:2px 7px;">${riskBadgeHtml(risk).match(/label: "(.*?)"/)?.[1] || risk.toUpperCase()}</span>
+            <span style="font-size:10px;color:var(--text-muted);">${new Date(item.timestamp).toLocaleTimeString("en-IN", {hour:"2-digit",minute:"2-digit"})}</span>
+          </div>`;
+        historyList.appendChild(div);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CLEAR HISTORY (custom confirm dialog)
+    // ══════════════════════════════════════════════════════════════════════════
+    clearBtn.addEventListener("click", () => {
+      confirmOverlay.classList.add("visible");
+    });
+    confirmNo.addEventListener("click", () => {
+      confirmOverlay.classList.remove("visible");
+    });
+    confirmYes.addEventListener("click", async () => {
+      confirmOverlay.classList.remove("visible");
+      try {
+        await fetch(`${API_BASE}/history`, { method: "DELETE" });
+        Array.from(historyList.querySelectorAll(".history-item")).forEach(el => el.remove());
+        historyEmpty.style.display = "block";
+        showToast("🗑️ History cleared");
+      } catch {
+        showToast("❌ Server se connect nahi ho paya", 3000);
+      }
+    });
+    confirmOverlay.addEventListener("click", e => {
+      if (e.target === confirmOverlay) confirmOverlay.classList.remove("visible");
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UTILS
+    // ══════════════════════════════════════════════════════════════════════════
+    function scrollToBottom() {
+      setTimeout(() => {
+        chatFeed.scrollTo({ top: chatFeed.scrollHeight, behavior: "smooth" });
+      }, 50);
     }
 
     function escHtml(str) {
       return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+        .replace(/&/g,  "&amp;")
+        .replace(/</g,  "&lt;")
+        .replace(/>/g,  "&gt;")
+        .replace(/"/g,  "&quot;")
+        .replace(/'/g,  "&#39;");
+    }
+
+    function escAttr(str) {
+      return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
 
     // ══════════════════════════════════════════════════════════════════════════
