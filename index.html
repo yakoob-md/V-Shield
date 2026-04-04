@@ -851,9 +851,9 @@
       if (el) el.remove();
     }
 
-    function appendAIBubble(aiResponse, audioHex = null) {
+    function appendAIBubble(aiResponse, audioHex = null, backendRisk = "unknown") {
       removeTypingIndicator();
-      const risk = detectRisk(aiResponse);
+      const risk = backendRisk;
       const div  = document.createElement("div");
       div.className = `bubble-ai ${risk}`;
 
@@ -1014,11 +1014,11 @@
 
         // ✅ FIX: Then show AI response with audio
         if (data.ai_response) {
-          appendAIBubble(data.ai_response, data.audio_base64 || null);
+          appendAIBubble(data.ai_response, data.audio_base64 || null, data.risk_level);
         }
 
-        // Update lang mode indicator
-        updateLangMode(data.ai_response);
+        // Update lang mode indicator using backend field
+        updateLangMode(data.language);
 
         // ✅ FIX: Update history AFTER rendering UI
         setTimeout(() => fetchHistory(), 200);
@@ -1059,9 +1059,9 @@
         const data = await res.json();
 
         // ✅ FIX: Show response BEFORE history update
-        if (data.ai_response) appendAIBubble(data.ai_response);
+        if (data.ai_response) appendAIBubble(data.ai_response, null, data.risk_level);
 
-        updateLangMode(data.ai_response);
+        updateLangMode(data.language);
 
         // ✅ FIX: History updated AFTER rendering
         setTimeout(() => fetchHistory(), 200);
@@ -1092,12 +1092,10 @@
     // ══════════════════════════════════════════════════════════════════════════
     // LANG MODE INDICATOR
     // ══════════════════════════════════════════════════════════════════════════
-    function updateLangMode(text) {
-      if (!text) return;
-      // Detect if response is predominantly English (no Hindi chars)
-      const hasHindi = /[\u0900-\u097F]/.test(text);
-      const looksEnglish = !hasHindi && !/bhai|karo|hai|nahi|kya|le|safe|aur/i.test(text);
-      if (looksEnglish) {
+    function updateLangMode(lang) {
+      if (!lang) return;
+      const isEnglish = lang.toLowerCase().includes("english");
+      if (isEnglish) {
         langMode.textContent = "🌐 English Mode";
         langMode.style.background = "#dbeafe";
         langMode.style.color      = "#1d4ed8";
@@ -1152,11 +1150,18 @@
     // ══════════════════════════════════════════════════════════════════════════
     // HISTORY
     // ══════════════════════════════════════════════════════════════════════════
-    async function fetchHistory() {
+    async function fetchHistory(isFirstLoad = false) {
       try {
         const res  = await fetch(`${API_BASE}/history`);
         const data = await res.json();
-        renderHistory(data.history || []);
+        const items = data.history || [];
+        renderHistory(items);
+        if (isFirstLoad && items.length > 0) {
+          items.slice().reverse().forEach(itm => {
+            appendUserBubble(itm.user_query);
+            appendAIBubble(itm.ai_response, null, itm.risk_level);
+          });
+        }
       } catch {
         historyEmpty.classList.remove("hidden");
       }
@@ -1177,9 +1182,10 @@
       Array.from(historyList.querySelectorAll(".history-item")).forEach(el => el.remove());
 
       items.forEach(item => {
-        const risk = detectRisk(item.ai_response);
+        const risk = item.risk_level || "unknown";
         const div  = document.createElement("div");
         div.className = "history-item";
+        div.onclick = () => { textInput.value = item.user_query; textInput.focus(); };
         div.innerHTML = `
           <p style="font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
             🙋 ${escHtml(item.user_query)}
@@ -1244,7 +1250,7 @@
     // ══════════════════════════════════════════════════════════════════════════
     // INIT
     // ══════════════════════════════════════════════════════════════════════════
-    fetchHistory();
+    fetchHistory(true);
 
   })();
   </script>
