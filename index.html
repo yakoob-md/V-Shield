@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clean Sport | Anti-Doping Assistant</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts – Tiro Devanagari Hindi (display) + Noto Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── CSS Variables ───────────────────────────────────────────── */
+    :root {
+      --saffron:    #FF6B00;
+      --saffron-lt: #FF8C35;
+      --green:      #138808;
+      --green-lt:   #1aaa0a;
+      --navy:       #000080;
+      --navy-lt:    #1a1a9e;
+      --cream:      #FFF8EE;
+      --card-bg:    #FFFFFF;
+      --text-main:  #1a1a2e;
+      --text-muted: #6b7280;
+      --safe:       #15803d;
+      --caution:    #b45309;
+      --banned:     #b91c1c;
+      --unknown:    #6b21a8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    /* ─── Display font for headers ─── */
+    .font-display { font-family: 'Tiro Devanagari Hindi', serif; }
+
+    /* ─── Tricolor accent bar ─── */
+    .tricolor-bar {
+      height: 5px;
+      background: linear-gradient(90deg, var(--saffron) 33.3%, #fff 33.3% 66.6%, var(--green) 66.6%);
+    }
+
+    /* ─── Mic button states ─── */
+    #mic-btn {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 30px rgba(255, 107, 0, 0.35);
+      background: radial-gradient(circle at 35% 35%, var(--saffron-lt), var(--saffron));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      position: relative;
+      user-select: none;
+    }
+
+    #mic-btn:hover  { transform: scale(1.06); }
+    #mic-btn:active { transform: scale(0.97); }
+
+    #mic-btn.recording {
+      background: radial-gradient(circle at 35% 35%, #ff4444, #cc0000);
+      box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.6);
+      animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0.6); }
+      70%  { box-shadow: 0 0 0 20px rgba(204, 0, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(204, 0, 0, 0); }
+    }
+
+    /* ─── Risk badge colors ─── */
+    .badge-safe    { background: #dcfce7; color: var(--safe);    border: 1px solid #86efac; }
+    .badge-caution { background: #fef3c7; color: var(--caution); border: 1px solid #fcd34d; }
+    .badge-banned  { background: #fee2e2; color: var(--banned);  border: 1px solid #fca5a5; }
+    .badge-unknown { background: #f3e8ff; color: var(--unknown); border: 1px solid #d8b4fe; }
+
+    /* ─── Response card animations ─── */
+    .response-card {
+      animation: slide-up 0.35s ease both;
+    }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── History items ─── */
+    .history-item {
+      border-left: 3px solid var(--saffron);
+      transition: background 0.15s;
+    }
+    .history-item:hover { background: #fff5ea; }
+
+    /* ─── Scrollbar ─── */
+    .scroll-area::-webkit-scrollbar { width: 5px; }
+    .scroll-area::-webkit-scrollbar-track { background: transparent; }
+    .scroll-area::-webkit-scrollbar-thumb { background: #e5c9a8; border-radius: 999px; }
+
+    /* ─── Loading spinner ─── */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #ffe0c0;
+      border-top-color: var(--saffron);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Waveform bars (decorative) ─── */
+    .wave-bar {
+      width: 4px; border-radius: 999px;
+      background: var(--saffron);
+      transform-origin: bottom;
+      animation: wave-anim 0.8s ease-in-out infinite alternate;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.05s; }
+    @keyframes wave-anim {
+      from { height: 6px;  opacity: 0.5; }
+      to   { height: 24px; opacity: 1.0; }
+    }
+
+    /* ─── Text input fallback ─── */
+    #text-input:focus {
+      outline: none;
+      border-color: var(--saffron);
+      box-shadow: 0 0 0 3px rgba(255,107,0,0.15);
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+  <!-- ── Tricolor accent ── -->
+  <div class="tricolor-bar w-full"></div>
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Chakra emblem placeholder -->
+        <div class="w-10 h-10 rounded-full bg-[--navy] flex items-center justify-center flex-shrink-0"
+             style="background:var(--navy)">
+          <svg viewBox="0 0 40 40" class="w-8 h-8" fill="none">
+            <circle cx="20" cy="20" r="8" stroke="#fff" stroke-width="2"/>
+            <circle cx="20" cy="20" r="3" fill="#fff"/>
+            <!-- spokes -->
+            <g stroke="#fff" stroke-width="1.2">
+              <line x1="20" y1="5"  x2="20" y2="12"/>
+              <line x1="20" y1="28" x2="20" y2="35"/>
+              <line x1="5"  y1="20" x2="12" y2="20"/>
+              <line x1="28" y1="20" x2="35" y2="20"/>
+              <line x1="9.4" y1="9.4" x2="14.3" y2="14.3"/>
+              <line x1="25.7" y1="25.7" x2="30.6" y2="30.6"/>
+              <line x1="30.6" y1="9.4" x2="25.7" y2="14.3"/>
+              <line x1="14.3" y1="25.7" x2="9.4" y2="30.6"/>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-display text-lg leading-tight" style="color:var(--navy)">
+            Clean Sport सहायक
+          </h1>
+          <p class="text-xs" style="color:var(--text-muted)">Anti-Doping · Rural Athletes</p>
+        </div>
+      </div>
+      <span class="text-xs font-semibold px-2 py-1 rounded-full"
+            style="background:#e8f5e9;color:var(--green)">
+        🇮🇳 NADA Aligned
+      </span>
+    </div>
+  </header>
+
+  <!-- ══════════════ MAIN LAYOUT ══════════════ -->
+  <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col lg:flex-row gap-6">
+
+    <!-- ── LEFT: Mic Panel ── -->
+    <section class="flex-1 flex flex-col gap-5">
+
+      <!-- Mic card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-orange-100 p-6 flex flex-col items-center gap-4">
+        <p class="font-display text-xl text-center" style="color:var(--navy)">
+          आपका सवाल पूछो 🎙️
+        </p>
+        <p class="text-sm text-center" style="color:var(--text-muted)">
+          Mic dabao aur bolo – koi bhi supplement ya medicine ke baare mein
+        </p>
+
+        <!-- Waveform (visible while recording) -->
+        <div id="waveform" class="hidden items-center gap-1 h-8">
+          <div class="wave-bar h-3"></div>
+          <div class="wave-bar h-5"></div>
+          <div class="wave-bar h-6"></div>
+          <div class="wave-bar h-4"></div>
+          <div class="wave-bar h-3"></div>
+        </div>
+
+        <!-- Mic button -->
+        <button id="mic-btn" title="Press and hold to record">
+          <!-- Mic SVG icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+               fill="white" class="w-10 h-10 pointer-events-none">
+            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z"/>
+            <path d="M19 10a1 1 0 0 1 2 0 9 9 0 0 1-18 0 1 1 0 0 1 2 0 7 7 0 0 0 14 0z"/>
+            <path d="M12 19v4m-3 0h6" stroke="white" stroke-width="1.5"
+                  stroke-linecap="round" fill="none"/>
+          </svg>
+        </button>
+
+        <p id="mic-status" class="text-sm font-semibold" style="color:var(--saffron)">
+          Dabao aur bolo…
+        </p>
+
+        <!-- Divider -->
+        <div class="w-full flex items-center gap-3">
+          <div class="flex-1 h-px bg-orange-100"></div>
+          <span class="text-xs" style="color:var(--text-muted)">ya text type karo</span>
+          <div class="flex-1 h-px bg-orange-100"></div>
+        </div>
+
+        <!-- Text fallback input -->
+        <div class="w-full flex gap-2">
+          <input id="text-input" type="text"
+                 placeholder="e.g. Kya ashwagandha safe hai?"
+                 class="flex-1 border border-orange-200 rounded-xl px-4 py-2 text-sm
+                        transition-all duration-200"
+                 style="background:#fffbf7" />
+          <button id="text-send-btn"
+                  class="px-4 py-2 rounded-xl text-white text-sm font-semibold
+                         transition-all duration-200 active:scale-95"
+                  style="background:var(--saffron)">
+            भेजो
+          </button>
+        </div>
+      </div>
+
+      <!-- Response card -->
+      <div id="response-area" class="hidden"></div>
+
+      <!-- Loading indicator -->
+      <div id="loading" class="hidden flex-col items-center gap-2 py-6">
+        <div class="spinner"></div>
+        <p class="text-sm" style="color:var(--text-muted)">Samajh raha hoon…</p>
+      </div>
+
+    </section>
+
+    <!-- ── RIGHT: Chat History Panel ── -->
+    <aside class="w-full lg:w-80 flex flex-col gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-orange-100 overflow-hidden flex flex-col"
+           style="max-height:600px">
+
+        <!-- Panel header -->
+        <div class="px-4 py-3 flex items-center justify-between border-b border-orange-100">
+          <h2 class="font-semibold text-sm" style="color:var(--navy)">
+            💬 Purani Baatein
+          </h2>
+          <button id="clear-btn"
+                  class="text-xs px-2 py-1 rounded-lg transition-colors duration-150"
+                  style="color:var(--banned);background:#fee2e2">
+            Clear
+          </button>
+        </div>
+
+        <!-- History list -->
+        <div id="history-list" class="flex-1 overflow-y-auto scroll-area px-3 py-2 flex flex-col gap-2">
+          <!-- Injected by JS -->
+          <p id="history-empty" class="text-sm text-center py-8" style="color:var(--text-muted)">
+            Abhi koi sawaal nahi poocha. 🙂
+          </p>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <footer class="py-3 text-center text-xs" style="color:var(--text-muted)">
+    Sirf supplements aur medicines ki jankari ke liye · NADA Helpline: 1800-11-9979
+  </footer>
+
+  <!-- ══════════════ JAVASCRIPT ══════════════ -->
+  <script>
+  (() => {
+    "use strict";
+
+    // ── Config ────────────────────────────────────────────────────────────────
+    const API_BASE = "http://localhost:8000";
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const micBtn        = document.getElementById("mic-btn");
+    const micStatus     = document.getElementById("mic-status");
+    const waveform      = document.getElementById("waveform");
+    const responseArea  = document.getElementById("response-area");
+    const loadingEl     = document.getElementById("loading");
+    const historyList   = document.getElementById("history-list");
+    const historyEmpty  = document.getElementById("history-empty");
+    const clearBtn      = document.getElementById("clear-btn");
+    const textInput     = document.getElementById("text-input");
+    const textSendBtn   = document.getElementById("text-send-btn");
+
+    // ── MediaRecorder state ───────────────────────────────────────────────────
+    let mediaRecorder = null;
+    let audioChunks   = [];
+    let isRecording   = false;
+    let stream        = null;
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // UTILITY: Risk badge
+    // ══════════════════════════════════════════════════════════════════════════
+    function riskBadge(responseText) {
+      if (/BANNED|❌/i.test(responseText))
+        return '<span class="badge-banned px-2 py-0.5 rounded-full text-xs font-bold">BANNED ❌</span>';
+      if (/CAUTION|⚠️/i.test(responseText))
+        return '<span class="badge-caution px-2 py-0.5 rounded-full text-xs font-bold">CAUTION ⚠️</span>';
+      if (/SAFE|✅/i.test(responseText))
+        return '<span class="badge-safe px-2 py-0.5 rounded-full text-xs font-bold">SAFE ✅</span>';
+      if (/UNKNOWN|❓/i.test(responseText))
+        return '<span class="badge-unknown px-2 py-0.5 rounded-full text-xs font-bold">UNKNOWN ❓</span>';
+      return '<span class="badge-caution px-2 py-0.5 rounded-full text-xs font-bold">CAUTION ⚠️</span>';
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDER: Main response card
+    // ══════════════════════════════════════════════════════════════════════════
+    function renderResponse(userQuery, aiResponse) {
+      responseArea.classList.remove("hidden");
+      // Prepend user bubble + AI card (replace previous, keep last exchange visible)
+      responseArea.innerHTML = `
+        <div class="response-card bg-white rounded-2xl shadow-sm border border-orange-100 p-5">
+          <!-- User bubble -->
+          <div class="flex items-start gap-2 mb-3">
+            <span class="text-lg">🙋</span>
+            <p class="text-sm font-semibold" style="color:var(--navy)">${escHtml(userQuery)}</p>
+          </div>
+          <hr class="border-orange-100 mb-3"/>
+          <!-- AI response -->
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-base">🤖</span>
+            ${riskBadge(aiResponse)}
+          </div>
+          <p class="text-sm leading-relaxed" style="color:var(--text-main)">${escHtml(aiResponse)}</p>
+          <p class="mt-3 text-xs" style="color:var(--text-muted)">
+            ⚠️ Yeh sirf guidance hai – doctor ya certified expert se confirm karo.
+          </p>
+        </div>`;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // RENDER: History list
+    // ══════════════════════════════════════════════════════════════════════════
+    function renderHistory(items) {
+      if (!items || items.length === 0) {
+        historyEmpty.classList.remove("hidden");
+        return;
+      }
+      historyEmpty.classList.add("hidden");
+      historyList.innerHTML = "";
+
+      items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "history-item bg-orange-50 rounded-xl px-3 py-2 cursor-default";
+        div.innerHTML = `
+          <p class="text-xs font-semibold truncate" style="color:var(--navy)">
+            🙋 ${escHtml(item.user_query)}
+          </p>
+          <p class="text-xs mt-1 line-clamp-2" style="color:var(--text-muted)">
+            ${riskBadge(item.ai_response)} ${escHtml(item.ai_response.slice(0, 80))}…
+          </p>
+          <p class="text-xs mt-1" style="color:var(--text-muted); font-size:10px">
+            ${new Date(item.timestamp).toLocaleString("en-IN")}
+          </p>`;
+        historyList.appendChild(div);
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // API: Fetch history
+    // ══════════════════════════════════════════════════════════════════════════
+    async function fetchHistory() {
+      try {
+        const res  = await fetch(`${API_BASE}/history`);
+        const data = await res.json();
+        renderHistory(data.history || []);
+      } catch {
+        // Backend not running – show empty state silently
+        historyEmpty.classList.remove("hidden");
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // API: Clear history
+    // ══════════════════════════════════════════════════════════════════════════
+    clearBtn.addEventListener("click", async () => {
+      if (!confirm("Sab purani baatein delete karein?")) return;
+      try {
+        await fetch(`${API_BASE}/history`, { method: "DELETE" });
+        historyList.innerHTML = "";
+        historyEmpty.classList.remove("hidden");
+        responseArea.classList.add("hidden");
+      } catch {
+        alert("Server se connect nahi ho paya. Backend chalu hai?");
+      }
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // API: Submit query (voice blob or text)
+    // ══════════════════════════════════════════════════════════════════════════
+    async function submitVoiceQuery(audioBlob) {
+      showLoading(true);
+      try {
+        const form = new FormData();
+        form.append("audio", audioBlob, "recording.webm");
+        const res = await fetch(`${API_BASE}/verify`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        const data = await res.json();
+
+        // Voice endpoint returns ONLY audio – play it directly
+        if (data.audio_base64) {
+          playAudioResponse(data.audio_base64);
+        }
+
+        // Refresh sidebar history so the new entry appears
+        fetchHistory();
+      } catch (err) {
+        renderFallbackError(err.message);
+      } finally {
+        showLoading(false);
+        micStatus.textContent = "Dabao aur bolo…";
+      }
+    }
+
+    async function submitTextQuery(query) {
+      showLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/verify-text`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ query }),
+        });
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        const data = await res.json();
+
+        // ✅ Render response IN CHAT UI immediately – do NOT wait for history
+        renderResponse(data.user_query, data.ai_response);
+
+        // Refresh sidebar history after rendering (async, does not block UI)
+        fetchHistory();
+      } catch (err) {
+        renderFallbackError(err.message);
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // MIC RECORDING  (press-and-hold)
+    // ══════════════════════════════════════════════════════════════════════════
+    async function startRecording() {
+      if (isRecording) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks   = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: "audio/webm" });
+          stream.getTracks().forEach(t => t.stop());
+          submitVoiceQuery(blob);
+        };
+        mediaRecorder.start();
+        isRecording = true;
+        micBtn.classList.add("recording");
+        micStatus.textContent = "Bol raha hoon… (chhodo to ruk jayega)";
+        waveform.classList.remove("hidden");
+        waveform.classList.add("flex");
+      } catch {
+        alert("Microphone access ki zaroorat hai. Browser settings check karo.");
+      }
+    }
+
+    function stopRecording() {
+      if (!isRecording || !mediaRecorder) return;
+      mediaRecorder.stop();
+      isRecording = false;
+      micBtn.classList.remove("recording");
+      micStatus.textContent = "Processing…";
+      waveform.classList.add("hidden");
+      waveform.classList.remove("flex");
+    }
+
+    // Press-and-hold for mouse
+    micBtn.addEventListener("mousedown",  startRecording);
+    micBtn.addEventListener("mouseup",    stopRecording);
+    micBtn.addEventListener("mouseleave", stopRecording);
+
+    // Press-and-hold for touch (mobile)
+    micBtn.addEventListener("touchstart", e => { e.preventDefault(); startRecording(); }, { passive: false });
+    micBtn.addEventListener("touchend",   e => { e.preventDefault(); stopRecording();  }, { passive: false });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // TEXT INPUT
+    // ══════════════════════════════════════════════════════════════════════════
+    textSendBtn.addEventListener("click", () => {
+      const q = textInput.value.trim();
+      if (!q) return;
+      textInput.value = "";
+      submitTextQuery(q);
+    });
+
+    textInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") textSendBtn.click();
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ══════════════════════════════════════════════════════════════════════════
+    function showLoading(show) {
+      loadingEl.classList.toggle("hidden",  !show);
+      loadingEl.classList.toggle("flex",     show);
+      if (show) responseArea.classList.add("hidden");
+      micStatus.textContent = show ? "Samajh raha hoon…" : "Dabao aur bolo…";
+    }
+
+    /**
+     * Decodes hex-encoded audio bytes from backend and plays via Web Audio API.
+     * Falls back silently if browser cannot play MP3.
+     */
+    function playAudioResponse(hexString) {
+      try {
+        const bytes = new Uint8Array(
+          hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+        );
+        const blob = new Blob([bytes], { type: "audio/mpeg" });
+        const url  = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.onended = () => URL.revokeObjectURL(url);
+        audio.play().catch(err => {
+          console.warn("Audio playback blocked by browser:", err.message);
+        });
+        micStatus.textContent = "Jawab sun lo… 🔊";
+      } catch (err) {
+        console.warn("playAudioResponse failed:", err.message);
+      }
+    }
+
+    function renderFallbackError(msg) {
+      responseArea.classList.remove("hidden");
+      responseArea.innerHTML = `
+        <div class="response-card bg-red-50 border border-red-200 rounded-2xl p-5">
+          <p class="font-semibold text-sm text-red-700">⚠️ Server se connect nahi ho paya</p>
+          <p class="text-xs text-red-500 mt-1">${escHtml(msg)}</p>
+          <p class="text-xs text-red-500 mt-2">
+            Backend chalu karo: <code class="bg-red-100 px-1 rounded">uvicorn main:app --reload</code>
+          </p>
+        </div>`;
+      micStatus.textContent = "Dobara try karo…";
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════════════════════════════════════════
+    fetchHistory();
+
+  })();
+  </script>
+</body>
+</html>

@@ -1,5 +1,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+<<<<<<< HEAD
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+doping_venv/
+=======
 *.py[codz]
 *$py.class
 
@@ -138,12 +145,35 @@ celerybeat.pid
 .env
 .envrc
 .venv
+>>>>>>> b07a739993f93643d47178a38248bde311fcecfe
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
+<<<<<<< HEAD
+# Project Specific Data & Model Files
+*.db
+*.pkl
+*.bin
+chat_history.db
+chunks.pkl
+faiss_index.bin
+
+# Environment Variables
+.env
+.env.local
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+=======
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -205,3 +235,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+>>>>>>> b07a739993f93643d47178a38248bde311fcecfe

@@ -1,0 +1,348 @@
+{
+  "wada_substances": [
+    {
+      "name": "Testosterone",
+      "category": "Anabolic Agents",
+      "banned": true,
+      "notes": "Endogenous anabolic steroid; triggers positive if ratio >4:1."
+    },
+    {
+      "name": "Nandrolone",
+      "category": "Anabolic Agents",
+      "banned": true,
+      "notes": "Found in contaminated meat and some herbal supplements."
+    },
+    {
+      "name": "Stanozolol",
+      "category": "Anabolic Agents",
+      "banned": true,
+      "notes": "Common in counterfeit mass-gainer powders sold in rural markets."
+    },
+    {
+      "name": "Clostebol",
+      "category": "Anabolic Agents",
+      "banned": true,
+      "notes": "Present in some topical creams/ointments used for wound healing."
+    },
+    {
+      "name": "Clenbuterol",
+      "category": "Beta-2 Agonists",
+      "banned": true,
+      "notes": "Found in contaminated meat; also misused as a fat-burner."
+    },
+    {
+      "name": "Salbutamol (Albuterol)",
+      "category": "Beta-2 Agonists",
+      "banned": false,
+      "notes": "Permitted by inhalation up to 1600 mcg/day for asthma. Needs TUE for oral."
+    },
+    {
+      "name": "EPO (Erythropoietin)",
+      "category": "Peptide Hormones",
+      "banned": true,
+      "notes": "Blood-boosting agent; banned in all sports at all times."
+    },
+    {
+      "name": "HGH (Human Growth Hormone)",
+      "category": "Peptide Hormones",
+      "banned": true,
+      "notes": "Banned in-competition and out-of-competition."
+    },
+    {
+      "name": "Methylhexaneamine (DMAA)",
+      "category": "Stimulants",
+      "banned": true,
+      "notes": "Derived from geranium oil; found in pre-workouts and cosmetics."
+    },
+    {
+      "name": "Ephedrine",
+      "category": "Stimulants",
+      "banned": true,
+      "notes": "Present in traditional Chinese medicine and some cold remedies."
+    },
+    {
+      "name": "Pseudoephedrine",
+      "category": "Stimulants",
+      "banned": true,
+      "notes": "Common decongestant in over-the-counter cold medicines."
+    },
+    {
+      "name": "Amphetamine",
+      "category": "Stimulants",
+      "banned": true,
+      "notes": "Some ADHD medications contain amphetamine – TUE needed."
+    },
+    {
+      "name": "Furosemide",
+      "category": "Diuretics / Masking Agents",
+      "banned": true,
+      "notes": "Used medically for edema; banned in sport as a masking agent."
+    },
+    {
+      "name": "Probenecid",
+      "category": "Diuretics / Masking Agents",
+      "banned": true,
+      "notes": "Gout medicine that can mask steroid use – always banned."
+    },
+    {
+      "name": "Prednisolone",
+      "category": "Glucocorticoids",
+      "banned": true,
+      "notes": "Common anti-inflammatory; banned in-competition without TUE."
+    },
+    {
+      "name": "Dexamethasone",
+      "category": "Glucocorticoids",
+      "banned": true,
+      "notes": "Frequently prescribed by rural doctors; triggers positive test."
+    },
+    {
+      "name": "Betamethasone",
+      "category": "Glucocorticoids",
+      "banned": true,
+      "notes": "Topical and injectable steroid; banned in-competition."
+    },
+    {
+      "name": "Cannabinoids (THC)",
+      "category": "Cannabinoids",
+      "banned": true,
+      "notes": "Banned in-competition only. CBD is NOT prohibited."
+    },
+    {
+      "name": "Insulin",
+      "category": "Peptide Hormones",
+      "banned": true,
+      "notes": "Banned for non-diabetic athletes. Diabetic athletes need TUE."
+    },
+    {
+      "name": "Ibuprofen",
+      "category": "NSAIDs",
+      "banned": false,
+      "notes": "NOT banned. Safe for athletes to use as pain relief."
+    },
+    {
+      "name": "Paracetamol (Acetaminophen)",
+      "category": "Analgesics",
+      "banned": false,
+      "notes": "NOT banned. Safe to use for fever and pain."
+    },
+    {
+      "name": "Creatine Monohydrate",
+      "category": "Supplements",
+      "banned": false,
+      "notes": "NOT banned by WADA. Widely used and generally safe if certified."
+    },
+    {
+      "name": "Caffeine",
+      "category": "Stimulants",
+      "banned": false,
+      "notes": "NOT banned. Monitored substance – high doses flag for investigation."
+    }
+  ],
+  "medicines": [
+    {
+      "brand": "Becosules",
+      "composition": "Vitamin B complex",
+      "banned": false,
+      "notes": "Multivitamin – safe for athletes."
+    },
+    {
+      "brand": "Combiflam",
+      "composition": "Ibuprofen + Paracetamol",
+      "banned": false,
+      "notes": "Pain relief – NOT banned."
+    },
+    {
+      "brand": "Corex",
+      "composition": "Codeine + Chlorpheniramine",
+      "banned": true,
+      "notes": "Contains Codeine (narcotic analgesic) – banned in-competition."
+    },
+    {
+      "brand": "Vicks Action 500",
+      "composition": "Paracetamol + Pseudoephedrine",
+      "banned": true,
+      "notes": "Contains Pseudoephedrine – BANNED stimulant. Avoid completely."
+    },
+    {
+      "brand": "Allegra",
+      "composition": "Fexofenadine",
+      "banned": false,
+      "notes": "Antihistamine – safe for athletes."
+    },
+    {
+      "brand": "Betnovate Cream",
+      "composition": "Betamethasone",
+      "banned": true,
+      "notes": "Contains glucocorticoid – banned in-competition."
+    },
+    {
+      "brand": "Foracort Inhaler",
+      "composition": "Budesonide + Formoterol",
+      "banned": true,
+      "notes": "Contains glucocorticoid and beta-2 agonist – TUE required."
+    },
+    {
+      "brand": "Pan 40",
+      "composition": "Pantoprazole",
+      "banned": false,
+      "notes": "Antacid – safe for athletes."
+    },
+    {
+      "brand": "Taxim-O",
+      "composition": "Cefixime",
+      "banned": false,
+      "notes": "Antibiotic – safe for athletes."
+    },
+    {
+      "brand": "Disprin",
+      "composition": "Aspirin",
+      "banned": false,
+      "notes": "NOT banned. Safe to use."
+    },
+    {
+      "brand": "Benadryl Cough Syrup",
+      "composition": "Diphenhydramine + Ammonium Chloride",
+      "banned": false,
+      "notes": "Safe – no banned substance. But check variant; some versions have codeine."
+    },
+    {
+      "brand": "ORS (Electral)",
+      "composition": "Sodium + Potassium + Glucose",
+      "banned": false,
+      "notes": "Rehydration solution – completely safe."
+    },
+    {
+      "brand": "Decadron Injection",
+      "composition": "Dexamethasone",
+      "banned": true,
+      "notes": "Glucocorticoid injection – banned in-competition without TUE."
+    },
+    {
+      "brand": "Actifed",
+      "composition": "Triprolidine + Pseudoephedrine",
+      "banned": true,
+      "notes": "BANNED – contains Pseudoephedrine stimulant."
+    },
+    {
+      "brand": "Clotrimazole (Candid)",
+      "composition": "Clotrimazole",
+      "banned": false,
+      "notes": "Antifungal – safe for athletes."
+    }
+  ],
+  "supplements": [
+    {
+      "name": "Ashwagandha",
+      "type": "Ayurvedic",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Contains plant steroids (withanolides) that can trigger anabolic agent positives. Contamination risk very high."
+    },
+    {
+      "name": "Tribulus Terrestris",
+      "type": "Herbal",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Contains steroidal saponins; linked to testosterone positives. AVOID."
+    },
+    {
+      "name": "Deer Antler Velvet",
+      "type": "Herbal",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Contains IGF-1 (insulin-like growth factor) – banned peptide hormone. NEVER use."
+    },
+    {
+      "name": "Shilajit",
+      "type": "Ayurvedic",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Heavy metals found in many samples. May contain undeclared steroids."
+    },
+    {
+      "name": "Kaunch Beej (Mucuna Pruriens)",
+      "type": "Ayurvedic",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Contains L-DOPA; may affect dopamine and trigger positive for controlled substances."
+    },
+    {
+      "name": "Whey Protein (local unbranded)",
+      "type": "Protein Supplement",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Unbranded local whey frequently adulterated with anabolic steroids and cheap fillers."
+    },
+    {
+      "name": "Mass Gainer (counterfeit)",
+      "type": "Protein Supplement",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Counterfeit mass gainers often contain banned anabolic agents and diuretics."
+    },
+    {
+      "name": "Optimum Nutrition Gold Standard Whey",
+      "type": "Protein Supplement",
+      "certified": true,
+      "risk": "LOW",
+      "notes": "Internationally certified brand. Relatively safe but buy from verified retailers only."
+    },
+    {
+      "name": "MuscleBlaze Whey Protein (CoE-NSTS certified)",
+      "type": "Protein Supplement",
+      "certified": true,
+      "risk": "LOW",
+      "notes": "CoE-NSTS batch tested and certified. Safe for Indian athletes."
+    },
+    {
+      "name": "Creatine Monohydrate (Bigmuscles / CoE-NSTS)",
+      "type": "Performance",
+      "certified": true,
+      "risk": "LOW",
+      "notes": "Creatine itself is not banned. CoE-NSTS certified batch – safe."
+    },
+    {
+      "name": "Geranium Oil / Geranamine",
+      "type": "Pre-workout ingredient",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Natural source of DMAA (Methylhexaneamine) – BANNED stimulant. Found in cosmetics too."
+    },
+    {
+      "name": "Pre-workout (local unbranded)",
+      "type": "Pre-workout",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Unverified pre-workouts frequently contain DMAA, ephedrine, or banned stimulants."
+    },
+    {
+      "name": "Sarpagandha (Rauwolfia)",
+      "type": "Ayurvedic",
+      "certified": false,
+      "risk": "HIGH",
+      "notes": "Contains reserpine and yohimbine – potential stimulant flagging."
+    },
+    {
+      "name": "Multivitamin (Revital H / CoE-NSTS)",
+      "type": "Vitamins",
+      "certified": true,
+      "risk": "LOW",
+      "notes": "Standard multivitamin – if CoE-NSTS certified batch, safe to use."
+    },
+    {
+      "name": "Iron Supplements (Ferrous Sulphate)",
+      "type": "Minerals",
+      "certified": false,
+      "risk": "LOW",
+      "notes": "NOT banned. Safe for anemic athletes. Prefer pharmaceutical grade."
+    },
+    {
+      "name": "Vitamin D3 (Calcirol)",
+      "type": "Vitamins",
+      "certified": false,
+      "risk": "LOW",
+      "notes": "NOT banned. Safe and commonly needed in India."
+    }
+  ]
+}
