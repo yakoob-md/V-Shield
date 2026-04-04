@@ -342,9 +342,13 @@
     // RENDER: Main response card
     // ══════════════════════════════════════════════════════════════════════════
     function renderResponse(userQuery, aiResponse) {
+      if (!userQuery && !aiResponse) return; // Prevent empty renders
+      
       responseArea.classList.remove("hidden");
-      // Prepend user bubble + AI card (replace previous, keep last exchange visible)
-      responseArea.innerHTML = `
+      responseArea.classList.add("flex", "flex-col", "gap-4");
+
+      // Append user bubble + AI card
+      const cardHtml = `
         <div class="response-card bg-white rounded-2xl shadow-sm border border-orange-100 p-5">
           <!-- User bubble -->
           <div class="flex items-start gap-2 mb-3">
@@ -362,6 +366,11 @@
             ⚠️ Yeh sirf guidance hai – doctor ya certified expert se confirm karo.
           </p>
         </div>`;
+      
+      responseArea.insertAdjacentHTML("beforeend", cardHtml);
+
+      // Scroll to show latest message
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -433,13 +442,16 @@
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
 
-        // Voice endpoint returns ONLY audio – play it directly
+        // Voice endpoint returns audio – play it securely
         if (data.audio_base64) {
           playAudioResponse(data.audio_base64);
         }
 
-        // Refresh sidebar history so the new entry appears
-        fetchHistory();
+        // ✅ Render response IN CHAT UI manually so the user sees it immediately
+        renderResponse(data.user_query, data.ai_response);
+
+        // Refresh sidebar history strictly after rendering UI
+        setTimeout(() => fetchHistory(), 100);
       } catch (err) {
         renderFallbackError(err.message);
       } finally {
@@ -459,11 +471,11 @@
         if (!res.ok) throw new Error(`Server error ${res.status}`);
         const data = await res.json();
 
-        // ✅ Render response IN CHAT UI immediately – do NOT wait for history
+        // ✅ Render response IN CHAT UI immediately – append it to the feed
         renderResponse(data.user_query, data.ai_response);
 
-        // Refresh sidebar history after rendering (async, does not block UI)
-        fetchHistory();
+        // Refresh sidebar history strictly after rendering UI
+        setTimeout(() => fetchHistory(), 100);
       } catch (err) {
         renderFallbackError(err.message);
       } finally {

@@ -440,6 +440,8 @@ async def verify(audio: UploadFile = File(...)):
         log.info("✅ [/verify] Audio response ready – sending to client")
 
         return JSONResponse({
+            "user_query": _user_query,
+            "ai_response": _ai_response,
             "audio_base64": audio_bytes_out.hex(),
         })
 
