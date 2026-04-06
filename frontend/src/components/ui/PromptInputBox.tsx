@@ -1,7 +1,7 @@
 import React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode } from "lucide-react";
+import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, Brain, Folder } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -705,7 +705,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     whileHover={{ rotate: showThink ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                     transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   >
-                    <BrainCog className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
+                    <Brain className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
                   </motion.div>
                 </div>
                 <AnimatePresence>
@@ -741,7 +741,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     whileHover={{ rotate: showCanvas ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                     transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   >
-                    <FolderCode className={cn("w-4 h-4", showCanvas ? "text-[#F97316]" : "text-inherit")} />
+                    <Folder className={cn("w-4 h-4", showCanvas ? "text-[#F97316]" : "text-inherit")} />
                   </motion.div>
                 </div>
                 <AnimatePresence>

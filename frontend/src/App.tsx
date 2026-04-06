@@ -49,18 +49,6 @@ const App: React.FC = () => {
     navigator.clipboard.writeText(text);
   };
 
-  const playResponse = (audioHex: string | null) => {
-    if (!audioHex) return;
-    const bytes = new Uint8Array(audioHex.length / 2);
-    for (let i = 0; i < audioHex.length; i += 2) {
-      bytes[i / 2] = parseInt(audioHex.substr(i, 2), 16);
-    }
-    const blob = new Blob([bytes], { type: "audio/mpeg" });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-  };
-
   const getRiskIcon = (level: string) => {
     switch (level) {
       case "safe": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
@@ -77,6 +65,18 @@ const App: React.FC = () => {
       case "banned": return "bg-red-500/10 text-red-500 border-red-500/20";
       default: return "bg-purple-500/10 text-purple-500 border-purple-500/20";
     }
+  };
+
+  const playResponseAudio = (audioHex: string) => {
+    if (!audioHex) return;
+    const bytes = new Uint8Array(audioHex.length / 2);
+    for (let i = 0; i < audioHex.length; i += 2) {
+      bytes[i / 2] = parseInt(audioHex.substr(i, 2), 16);
+    }
+    const blob = new Blob([bytes], { type: "audio/mpeg" });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play();
   };
 
   return (
@@ -111,11 +111,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             ))}
-            {history.length === 0 && (
-              <div className="px-3 py-10 text-center">
-                <p className="text-xs text-gray-600 italic">No recent chats</p>
-              </div>
-            )}
           </div>
 
           <div className="mt-auto pt-4 border-t border-[#262626]">
@@ -134,26 +129,11 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Toggle Sidebar Button (Mobile) */}
-      {!sidebarOpen && (
-        <button 
-          className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#262626] text-gray-400 hover:text-white"
-          onClick={() => setSidebarOpen(true)}
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      )}
-
       {/* Main Content */}
       <main className="flex-1 flex flex-col relative overflow-hidden h-full">
         {/* Header */}
         <header className="flex items-center justify-between p-4 border-b border-[#262626] glass-effect">
           <div className="flex items-center gap-3">
-             {sidebarOpen && (
-               <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-500 hover:text-white">
-                 <X className="w-5 h-5" />
-               </button>
-             )}
              <div>
                <h1 className="text-sm font-bold bg-gradient-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Clean Sport सहायक</h1>
                <p className="text-[10px] text-gray-500 tracking-wider">Anti-Doping Assistant for Rural Indian Athletes</p>
@@ -209,7 +189,10 @@ const App: React.FC = () => {
                              >
                                <Copy className="w-3.5 h-3.5" />
                              </button>
-                             <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] border border-[#262626] text-gray-500 hover:text-white transition-all transform hover:scale-105">
+                             <button 
+                               onClick={() => (msg as any).audio_hex && playResponseAudio((msg as any).audio_hex)}
+                               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] border border-[#262626] text-gray-500 hover:text-white transition-all transform hover:scale-105"
+                             >
                                 <Volume2 className="w-3.5 h-3.5" />
                                 <span className="text-[10px] font-bold tracking-tighter uppercase">Listen</span>
                              </button>
