@@ -1,38 +1,82 @@
 import { useState, useCallback, useEffect } from 'react';
 
+export interface ChatSession {
+  id: number;
+  title: string;
+  created_at: string;
+}
+
 export interface Message {
   id: number;
-  user_query: string;
-  ai_response: string;
+  role: 'user' | 'assistant';
+  content: string;
   language: string;
   risk_level: 'safe' | 'caution' | 'banned' | 'unknown';
   timestamp: string;
 }
 
 export const useChat = () => {
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [history, setHistory] = useState<Message[]>([]);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchChats = useCallback(async () => {
     try {
-      const res = await fetch('/history');
+      const res = await fetch('/chats');
       const data = await res.json();
-      setHistory(data.history || []);
+      setChatSessions(data || []);
+      return data;
     } catch (err) {
-      console.error("Failed to fetch history:", err);
+      console.error("Failed to fetch chats:", err);
+      return [];
     }
   }, []);
 
-  const sendMessage = useCallback(async (query: string) => {
+  const loadChat = useCallback(async (chatId: number) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/chats/${chatId}`);
+      if (!res.ok) throw new Error("Chat not found");
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setCurrentChatId(chatId);
+    } catch (err) {
+      console.error("Failed to load chat:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const createChat = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/chats', { method: 'POST' });
+      const data = await res.json();
+      await fetchChats();
+      setCurrentChatId(data.chat_id);
+      setMessages([]);
+      return data.chat_id;
+    } catch (err) {
+      console.error("Failed to create chat:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchChats]);
+
+  const sendMessage = useCallback(async (query: string, chatIdOverride?: number) => {
+    let targetChatId = chatIdOverride || currentChatId;
+    
+    if (!targetChatId) {
+      targetChatId = await createChat();
+      if (!targetChatId) return;
+    }
+
     if (!query.trim()) return;
 
     setIsLoading(true);
-    // Optimistically add user query (temp message)
-    const tempId = Date.now();
-    
     try {
-      const res = await fetch('/verify-text', {
+      const res = await fetch(`/verify-text?chat_id=${targetChatId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query }),
@@ -40,70 +84,72 @@ export const useChat = () => {
       
       const data = await res.json();
       
-      const newMessage: Message = {
-        id: tempId,
-        user_query: data.user_query,
-        ai_response: data.ai_response,
-        language: data.language,
-        risk_level: data.risk_level,
-        timestamp: new Date().toISOString(),
-      };
+      // Reload chat to get updated messages and title
+      await loadChat(targetChatId);
+      await fetchChats(); // Title might have changed
       
-      setMessages(prev => [...prev, newMessage]);
-      fetchHistory(); // Refresh sidebar history
       return data;
     } catch (err) {
       console.error("Send message error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchHistory]);
+  }, [currentChatId, createChat, loadChat, fetchChats]);
 
   const sendVoice = useCallback(async (audioBlob: Blob) => {
+    let targetChatId = currentChatId;
+    if (!targetChatId) {
+      targetChatId = await createChat();
+      if (!targetChatId) return;
+    }
+
     setIsLoading(true);
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
 
     try {
-      const res = await fetch('/verify', {
+      const res = await fetch(`/verify?chat_id=${targetChatId}`, {
         method: 'POST',
         body: formData,
       });
       
       const data = await res.json();
-      
-      const newMessage: Message = {
-        id: Date.now(),
-        user_query: data.user_query,
-        ai_response: data.ai_response,
-        language: data.language,
-        risk_level: data.risk_level,
-        timestamp: new Date().toISOString(),
-      };
-      
-      setMessages(prev => [...prev, newMessage]);
-      fetchHistory();
+      await loadChat(targetChatId);
+      await fetchChats();
       return data;
     } catch (err) {
       console.error("Voice message error:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchHistory]);
+  }, [currentChatId, createChat, loadChat, fetchChats]);
 
-  const clearHistory = useCallback(async () => {
+  const deleteChat = useCallback(async (chatId: number) => {
     try {
-      await fetch('/history', { method: 'DELETE' });
-      setHistory([]);
-      setMessages([]);
+      await fetch(`/chats/${chatId}`, { method: 'DELETE' });
+      await fetchChats();
+      if (currentChatId === chatId) {
+        setMessages([]);
+        setCurrentChatId(null);
+      }
     } catch (err) {
-      console.error("Clear history error:", err);
+      console.error("Delete chat error:", err);
     }
-  }, []);
+  }, [currentChatId, fetchChats]);
 
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    fetchChats();
+  }, [fetchChats]);
 
-  return { messages, history, isLoading, sendMessage, sendVoice, fetchHistory, clearHistory };
+  return { 
+    currentChatId, 
+    chatSessions, 
+    messages, 
+    isLoading, 
+    createChat, 
+    loadChat, 
+    sendMessage, 
+    sendVoice, 
+    deleteChat 
+  };
 };

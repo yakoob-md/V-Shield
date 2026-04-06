@@ -57,12 +57,12 @@ from groq import Groq
 GROQ_API_KEY     = os.getenv("GROQ_API_KEY")
 FAISS_INDEX_PATH = os.getenv("FAISS_INDEX_PATH", "faiss_index.bin")
 CHUNKS_PATH      = os.getenv("CHUNKS_PATH",      "chunks.pkl")
-SQLITE_DB_PATH   = os.getenv("SQLITE_DB_PATH",   "chat_history.db")
+SQLITE_DB_PATH   = os.getenv("SQLITE_DB_PATH",   "chats_v2.db")
 EMBEDDING_MODEL  = "paraphrase-multilingual-MiniLM-L12-v2"
 LLM_MODEL        = "llama-3.3-70b-versatile"
 WHISPER_MODEL    = "whisper-large-v3"
 TOP_K_RETRIEVAL  = 3    # FAISS chunks retrieved per query
-MEMORY_WINDOW    = 3    # Past interactions fed into LLM context
+MEMORY_WINDOW    = 10   # Context messages fed into LLM
 HISTORY_LIMIT    = 20   # Default /history page size
 
 # Startup timestamp (for /health uptime reporting)
@@ -93,22 +93,30 @@ class TextQueryRequest(BaseModel):
     query: str
 
 class VerifyResponse(BaseModel):
+    chat_id:      int
     user_query:   str
     ai_response:  str
-    audio_base64: Optional[str] = None   # hex-encoded MP3; None if TTS failed/disabled
-    language:     str = "hindi"          # detected language: "hindi" | "english"
-    risk_level:   str = "unknown"        # parsed from response: safe|caution|banned|unknown
+    audio_base64: Optional[str] = None
+    language:     str = "hindi"
+    risk_level:   str = "unknown"
 
-class HistoryItem(BaseModel):
-    id:          int
-    user_query:  str
-    ai_response: str
-    timestamp:   str
+class ChatSession(BaseModel):
+    id: int
+    title: str
+    created_at: str
 
-class HistoryResponse(BaseModel):
-    history: list[HistoryItem]
-    count:   int
-    total:   int
+class MessageItem(BaseModel):
+    id: int
+    role: str
+    content: str
+    risk_level: str
+    language: str
+    timestamp: str
+
+class ChatDetailResponse(BaseModel):
+    chat_id: int
+    title: str
+    messages: list[MessageItem]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -190,76 +198,111 @@ app.add_middleware(
 
 def get_db_connection() -> sqlite3.Connection:
     conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON;") # Ensure ON DELETE CASCADE works
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
-    """Create chat_history table if it doesn't exist. Also adds language column if missing."""
+    """Initialise the multi-chat database schema."""
     with get_db_connection() as conn:
+        # 1. Chats table
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS chat_history (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_query  TEXT     NOT NULL,
-                ai_response TEXT     NOT NULL,
-                language    TEXT     NOT NULL DEFAULT 'hindi',
-                risk_level  TEXT     NOT NULL DEFAULT 'unknown',
-                timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP
+            CREATE TABLE IF NOT EXISTS chats (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                title      TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        # Migration: add columns to existing DBs that pre-date v2
-        existing_cols = {
-            row[1] for row in conn.execute("PRAGMA table_info(chat_history)").fetchall()
-        }
-        for col, definition in [("language", "TEXT NOT NULL DEFAULT 'hindi'"),
-                                  ("risk_level", "TEXT NOT NULL DEFAULT 'unknown'")]:
-            if col not in existing_cols:
-                conn.execute(f"ALTER TABLE chat_history ADD COLUMN {col} {definition}")
-                log.info(f"🔧 DB migration: added column '{col}'")
+        # 2. Messages table
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                chat_id    INTEGER NOT NULL,
+                role       TEXT NOT NULL, -- 'user' or 'assistant'
+                content    TEXT NOT NULL,
+                language   TEXT NOT NULL DEFAULT 'hindi',
+                risk_level TEXT NOT NULL DEFAULT 'unknown',
+                timestamp  DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
+            )
+        """)
         conn.commit()
 
 
-def save_interaction(user_query: str, ai_response: str,
-                     language: str = "hindi", risk_level: str = "unknown") -> int:
-    """Persist a query-response pair to SQLite. Returns the new row id."""
+def create_new_chat(title: str = "New Chat") -> int:
     with get_db_connection() as conn:
-        cursor = conn.execute(
-            "INSERT INTO chat_history (user_query, ai_response, language, risk_level) VALUES (?, ?, ?, ?)",
-            (user_query, ai_response, language, risk_level),
-        )
+        cursor = conn.execute("INSERT INTO chats (title) VALUES (?)", (title,))
         conn.commit()
         return cursor.lastrowid
 
+def update_chat_title(chat_id: int, title: str):
+    with get_db_connection() as conn:
+        conn.execute("UPDATE chats SET title = ? WHERE id = ?", (title, chat_id))
+        conn.commit()
 
-def fetch_recent_history(limit: int = MEMORY_WINDOW) -> list[dict]:
-    """Retrieve the N most recent interactions (for in-prompt short-term memory)."""
+def save_message(chat_id: int, role: str, content: str, 
+                 language: str = "hindi", risk_level: str = "unknown"):
+    with get_db_connection() as conn:
+        conn.execute(
+            "INSERT INTO messages (chat_id, role, content, language, risk_level) VALUES (?, ?, ?, ?, ?)",
+            (chat_id, role, content, language, risk_level)
+        )
+        conn.commit()
+
+def fetch_chat_context(chat_id: int, limit: int = MEMORY_WINDOW) -> list[dict]:
+    """Retrieve history for a specific chat to maintain context."""
     with get_db_connection() as conn:
         rows = conn.execute(
-            "SELECT user_query, ai_response FROM chat_history ORDER BY id DESC LIMIT ?",
-            (limit,),
+            "SELECT role, content FROM messages WHERE chat_id = ? ORDER BY id DESC LIMIT ?",
+            (chat_id, limit),
         ).fetchall()
-    return [{"user_query": r["user_query"], "ai_response": r["ai_response"]}
-            for r in reversed(rows)]
+    # Groq/Llama expects list of {role, content}
+    return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
 
-
-def fetch_history_for_api(limit: int = HISTORY_LIMIT, offset: int = 0) -> tuple[list[dict], int]:
-    """
-    Retrieve paginated history for the /history endpoint.
-    Returns (items, total_count).
-    """
+def fetch_all_chats() -> list[dict]:
     with get_db_connection() as conn:
-        total = conn.execute("SELECT COUNT(*) FROM chat_history").fetchone()[0]
-        rows  = conn.execute(
-            "SELECT id, user_query, ai_response, language, risk_level, timestamp "
-            "FROM chat_history ORDER BY id DESC LIMIT ? OFFSET ?",
-            (limit, offset),
-        ).fetchall()
-    return [dict(r) for r in rows], total
+        rows = conn.execute("SELECT id, title, created_at FROM chats ORDER BY created_at DESC").fetchall()
+    return [dict(r) for r in rows]
 
+def fetch_chat_detail(chat_id: int) -> Optional[dict]:
+    with get_db_connection() as conn:
+        chat = conn.execute("SELECT id, title, created_at FROM chats WHERE id = ?", (chat_id,)).fetchone()
+        if not chat:
+            return None
+        messages = conn.execute(
+            "SELECT id, role, content, risk_level, language, timestamp FROM messages WHERE chat_id = ? ORDER BY id ASC",
+            (chat_id,)
+        ).fetchall()
+    return {
+        "chat_id": chat["id"],
+        "title": chat["title"],
+        "messages": [dict(m) for m in messages]
+    }
+
+
+def fetch_history_for_api():
+    """DEPRECATED: Old history endpoint logic."""
+    return [], 0
 
 def get_db_row_count() -> int:
-    with get_db_connection() as conn:
-        return conn.execute("SELECT COUNT(*) FROM chat_history").fetchone()[0]
+    """Helper to count total messages in DB."""
+    try:
+        with get_db_connection() as conn:
+            return conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
+    except:
+        return 0
+
+def delete_chat_session(chat_id: int) -> bool:
+    """Deletes a chat and its messages (cascades automatically)."""
+    try:
+        with get_db_connection() as conn:
+            cursor = conn.execute("DELETE FROM chats WHERE id = ?", (chat_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+    except Exception as e:
+        log.error(f"❌ Deletion error for chat {chat_id}: {e}")
+        return False
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -423,138 +466,91 @@ def retrieve_context(query: str, top_k: int = TOP_K_RETRIEVAL) -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 
 SYSTEM_PROMPT = """
-You are a trusted, empathetic anti-doping mentor for rural Indian athletes.
+You are a senior anti-doping mentor for road athletes. Your goal is to provide safety guidance on supplements and medications.
 
-YOUR STRICT RULES:
-1. DOMAIN: Answer ONLY questions about medicines, supplements, or doping risks.
-   - If the question is unrelated, respond (in the detected language):
-     Hindi/Hinglish: "Bhai main sirf supplements aur medicines ke baare mein help kar sakta hoon."
-     English: "I can only help with supplements and medicines related to anti-doping."
+IMPORTANT RULES:
+1. RESPONSE LANGUAGE & SCRIPT:
+   - If the user asks in English -> Respond in clear, simple English.
+   - If the user asks in Hindi/Hinglish -> Respond in **Hinglish (Hindi words using Latin/English script)**.
+   - **STRICT PROHIBITION**: NEVER use Devanagari script (like 'नमस्ते' or 'खून'). Use Latin script only (like 'Namaste' or 'khoon').
+   - Remove any pure Hindi characters from your output.
 
-2. NO HALLUCINATION: Use ONLY the knowledge context and past conversation. Do NOT invent facts.
-   - If the product is unknown or data is missing:
-     Hindi/Hinglish: "Iske baare mein pakka data nahi mila. Better hai use avoid karo ya certified product lo."
-     English: "No verified data found. Please avoid this product or use a certified alternative."
+2. DOMAIN: Answer ONLY about anti-doping, supplements, and prohibited substances.
+   - If asked about something else, politely decline in the same language/script style.
 
-3. SAFETY-FIRST: When uncertain, classify as RISKY — never assume safe.
+3. STRUCTURE:
+   - Every answer MUST start with a risk tag: SAFE ✅, CAUTION ⚠️, BANNED ❌, or UNKNOWN ❓.
+   - Keep responses concise: exactly 3 sentences.
+   - Sentence 1: Risk tag + direct answer.
+   - Sentence 2: Scientific/factual reason based on the provided context.
+   - Sentence 3: Practical advice (e.g., check with NADA or avoid).
 
-4. RISK CLASSIFICATION: Every answer MUST start with ONE of these exact tags:
-   - SAFE ✅       — substance confirmed safe for athletes
-   - CAUTION ⚠️   — substance may carry contamination or indirect risk
-   - BANNED ❌     — substance is on the WADA Prohibited List
-   - UNKNOWN ❓    — substance not found in knowledge base
-
-5. RESPONSE FORMAT: EXACTLY 3 short, plain sentences.
-   - Sentence 1: Risk tag + direct answer (e.g. "SAFE ✅ – Creatine allowed hai.")
-   - Sentence 2: Reason why (brief, factual, from context only).
-   - Sentence 3: Practical advice (what the athlete should do next).
-
-6. LANGUAGE: You will receive a language instruction below. Follow it strictly.
-   - Hinglish: Write in Hindi words but use Latin (English) script only, NOT Devanagari.
-   - English: Write in clear, simple English.
-
-7. TONE: Supportive mentor — warm, simple, never preachy or robotic.
-
-8. NEVER give medical prescriptions, legal guarantees, or absolute safety claims.
+4. TONE: Professional, empathetic, and mentor-like.
+5. NO HALLUCINATION: If the context doesn't mention a substance, say UNKNOWN ❓.
 """.strip()
 
 
 def call_llm(
     user_query:        str,
     knowledge_context: str,
-    past_chats:        list[dict],
+    past_messages:     list[dict],  # Now list of {role, content}
     lang:              str = "hindi",
 ) -> str:
     """
     Calls Groq LLM with a language-adaptive system prompt.
-    Falls back to a safe canned response if the API call fails.
     """
     if not state.groq_client:
-        return ("CAUTION ⚠️ – Server abhi ready nahi hai, thodi der baad try karo. "
-                "Agar urgent hai toh NADA helpline pe call karo: 1800-11-9979. "
-                "Koi bhi supplement lene se pehle certified product hi lo.")
+        return ("CAUTION ⚠️ – Server busy. Try NADA helpline: 1800-11-9979.")
 
-    # Language-specific instruction injected into system prompt
-    if lang == "english":
-        lang_instruction = (
-            "LANGUAGE INSTRUCTION: The user wrote in English. "
-            "Respond in clear, simple English only. Do NOT use Hindi or Hinglish."
-        )
-        fallback = (
-            "CAUTION ⚠️ – System is temporarily busy, please try again shortly. "
-            "If urgent, call the NADA helpline at 1800-11-9979. "
-            "Always use certified products before taking any supplement."
-        )
-    else:
-        lang_instruction = (
-            "LANGUAGE INSTRUCTION: The user wrote in Hindi or Hinglish. "
-            "Respond in Hinglish — Hindi words written in Latin (English) script. "
-            "Do NOT use Devanagari script anywhere in your response."
-        )
-        fallback = (
-            "CAUTION ⚠️ – Abhi system thoda busy hai, thodi der baad try karo. "
-            "Agar urgent hai toh NADA helpline pe call karo: 1800-11-9979. "
-            "Koi bhi supplement lene se pehle certified product hi lo."
-        )
+    # Build memory block from past messages
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    
+    # Add context window
+    for msg in past_messages:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    
+    # Add current context and query
+    user_content = f"KNOWLEDGE CONTEXT:\n{knowledge_context}\n\nUSER QUESTION: {user_query}"
+    messages.append({"role": "user", "content": user_content})
 
-    # Build short-term memory block
-    memory_block = ""
-    if past_chats:
-        memory_block = "RECENT CONVERSATION CONTEXT:\n"
-        for i, chat in enumerate(past_chats, 1):
-            memory_block += (
-                f"[{i}] User: {chat['user_query']}\n"
-                f"    Assistant: {chat['ai_response']}\n"
-            )
-        memory_block += "\n"
-
-    user_message = (
-        f"{memory_block}"
-        f"KNOWLEDGE CONTEXT:\n{knowledge_context}\n\n"
-        f"CURRENT QUESTION: {user_query}"
-    )
-
-    log.info(f"📤 Sending to Groq LLM (lang={lang}, query={user_query[:60]}…)")
     try:
         completion = state.groq_client.chat.completions.create(
             model=LLM_MODEL,
-            messages=[
-                {"role": "system", "content": f"{SYSTEM_PROMPT}\n\n{lang_instruction}"},
-                {"role": "user",   "content": user_message},
-            ],
-            temperature=0.3,
-            max_tokens=300,
+            messages=messages,
+            temperature=0.4,
+            max_tokens=400,
         )
-        response = completion.choices[0].message.content.strip()
-        log.info(f"📥 LLM response ({len(response)} chars): {response[:80]}…")
-        return response
+        return completion.choices[0].message.content.strip()
     except Exception as e:
-        log.error(f"❌ Groq LLM error: {e}")
-        return fallback
+        log.error(f"❌ LLM error: {e}")
+        return "CAUTION ⚠️ – Error processing request. Use certified products only."
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SHARED PIPELINE  (used by both /verify and /verify-text)
 # ══════════════════════════════════════════════════════════════════════════════
 
-def run_text_pipeline(query: str) -> dict:
+def run_text_pipeline(query: str, chat_id: int) -> dict:
     """
     Shared RAG pipeline for any text query (voice-transcribed or direct).
-
-    Returns a dict with:
-        user_query, ai_response, language, risk_level
     """
     lang              = detect_language(query)
-    past_chats        = fetch_recent_history(limit=MEMORY_WINDOW)
+    past_messages     = fetch_chat_context(chat_id, limit=MEMORY_WINDOW)
     knowledge_context = retrieve_context(query)
-    ai_response       = call_llm(query, knowledge_context, past_chats, lang=lang)
+    ai_response       = call_llm(query, knowledge_context, past_messages, lang=lang)
     risk_level        = parse_risk_level(ai_response)
 
-    # Persist to DB AFTER LLM responds (so history sidebar reflects real order)
-    save_interaction(query, ai_response, language=lang, risk_level=risk_level)
-    log.info(f"💾 Saved interaction – lang={lang}, risk={risk_level}")
+    # Save messages to database
+    save_message(chat_id, "user", query, language=lang)
+    save_message(chat_id, "assistant", ai_response, language=lang, risk_level=risk_level)
+    
+    # Auto-generate title if this is the first interaction
+    if len(past_messages) == 0:
+        new_title = query[:30] + "..." if len(query) > 30 else query
+        update_chat_title(chat_id, new_title)
 
     return {
+        "chat_id":     chat_id,
         "user_query":  query,
         "ai_response": ai_response,
         "language":    lang,
@@ -567,160 +563,72 @@ def run_text_pipeline(query: str) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ─── POST /verify  ────────────────────────────────────────────────────────────
-@app.post(
-    "/verify",
-    summary="Process voice query",
-    description=(
-        "Accepts a voice audio file (WebM/OGG/MP3). Runs STT → RAG → LLM → TTS pipeline. "
-        "Returns user_query, ai_response, audio_base64 (hex-encoded MP3), language, risk_level."
-    ),
-)
-async def verify(audio: UploadFile = File(...)):
-    """
-    Voice pipeline endpoint.
-
-    Returns:
-        {
-          "user_query":   "...",
-          "ai_response":  "...",
-          "audio_base64": "<hex MP3 or null>",
-          "language":     "hindi" | "english",
-          "risk_level":   "safe" | "caution" | "banned" | "unknown"
-        }
-    """
-    log.info("📨 [/verify] Voice query received")
-
+@app.post("/verify", summary="Process voice query with chat context")
+async def verify(chat_id: int = Query(...), audio: UploadFile = File(...)):
+    log.info(f"📨 [/verify] Voice query for chat {chat_id}")
     audio_bytes = await audio.read()
     if not audio_bytes:
-        raise HTTPException(status_code=400, detail="Empty audio file received.")
+        raise HTTPException(status_code=400, detail="Empty audio file.")
 
-    # Step 1: Speech → Text
     user_query = transcribe_audio(audio_bytes)
+    result = run_text_pipeline(user_query, chat_id)
 
-    # Step 2: Text pipeline (RAG + LLM + save)
-    result = run_text_pipeline(user_query)
-
-    # Step 3: Text → Speech
-    tts_lang    = "hi" if result["language"] == "hindi" else "en"
-    tts_bytes   = generate_tts(result["ai_response"], language=tts_lang)
+    tts_lang = "hi" if result["language"] == "hindi" else "en"
+    tts_bytes = generate_tts(result["ai_response"], language=tts_lang)
     audio_base64 = tts_bytes.hex() if tts_bytes else None
 
-    log.info("✅ [/verify] Sending response to client")
     return JSONResponse({
+        "chat_id":      result["chat_id"],
         "user_query":   result["user_query"],
         "ai_response":  result["ai_response"],
-        "audio_base64": audio_base64,   # None → frontend shows text only, no audio player
+        "audio_base64": audio_base64,
         "language":     result["language"],
         "risk_level":   result["risk_level"],
     })
 
 
 # ─── POST /verify-text  ───────────────────────────────────────────────────────
-@app.post(
-    "/verify-text",
-    summary="Process text query",
-    description=(
-        "Accepts a plain-text query from the chat UI. "
-        "Returns user_query, ai_response, language, risk_level. "
-        "No audio is generated (text mode only)."
-    ),
-)
-async def verify_text(payload: TextQueryRequest):
-    """
-    Text pipeline endpoint.
-
-    Body: { "query": "Kya whey protein safe hai?" }
-
-    Returns:
-        {
-          "user_query":  "...",
-          "ai_response": "...",
-          "language":    "hindi" | "english",
-          "risk_level":  "safe" | "caution" | "banned" | "unknown"
-        }
-    """
+@app.post("/verify-text", summary="Process text query with chat context")
+async def verify_text(payload: TextQueryRequest, chat_id: int = Query(...)):
     query = payload.query.strip()
     if not query:
-        raise HTTPException(status_code=400, detail="Query text cannot be empty.")
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
-    log.info(f"📨 [/verify-text] Query: {query[:60]}…")
-    result = run_text_pipeline(query)
+    log.info(f"📨 [/verify-text] Chat {chat_id}: {query[:60]}…")
+    result = run_text_pipeline(query, chat_id)
 
-    log.info("✅ [/verify-text] Sending response to client")
     return JSONResponse({
+        "chat_id":     result["chat_id"],
         "user_query":  result["user_query"],
         "ai_response": result["ai_response"],
         "language":    result["language"],
         "risk_level":  result["risk_level"],
     })
 
+@app.post("/chats", summary="Create a new chat session")
+async def create_chat():
+    chat_id = create_new_chat("New Chat")
+    return {"chat_id": chat_id, "title": "New Chat"}
 
-# ─── GET /history  ────────────────────────────────────────────────────────────
-@app.get(
-    "/history",
-    summary="Fetch paginated chat history",
-    description="Returns the most recent `limit` interactions, with optional `offset` for pagination.",
-)
-async def history(
-    limit:  int = Query(default=HISTORY_LIMIT, ge=1,  le=100,  description="Max items to return"),
-    offset: int = Query(default=0,              ge=0,           description="Skip N newest items"),
-):
-    """
-    Returns:
-        {
-          "history": [ { "id", "user_query", "ai_response", "language", "risk_level", "timestamp" }, … ],
-          "count":   <items in this page>,
-          "total":   <total rows in DB>
-        }
-    """
-    try:
-        rows, total = fetch_history_for_api(limit=limit, offset=offset)
-        return JSONResponse({"history": rows, "count": len(rows), "total": total})
-    except Exception as e:
-        log.error(f"❌ History fetch error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+@app.get("/chats", response_model=list[ChatSession])
+async def list_chats():
+    return fetch_all_chats()
+
+@app.get("/chats/{chat_id}", response_model=ChatDetailResponse)
+async def get_chat(chat_id: int):
+    detail = fetch_chat_detail(chat_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return detail
 
 
-# ─── DELETE /history  (clear all) ─────────────────────────────────────────────
-@app.delete(
-    "/history",
-    summary="Clear all chat history",
-)
-async def clear_history():
-    """Deletes every row from chat_history."""
-    try:
-        with get_db_connection() as conn:
-            conn.execute("DELETE FROM chat_history")
-            conn.commit()
-        log.info("🗑️  All history cleared")
-        return JSONResponse({"message": "Chat history cleared successfully.", "deleted": True})
-    except Exception as e:
-        log.error(f"❌ Clear history error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ─── DELETE /history/{item_id}  (delete single item) ──────────────────────────
-@app.delete(
-    "/history/{item_id}",
-    summary="Delete a single chat history item",
-)
-async def delete_history_item(item_id: int):
-    """Deletes a single row from chat_history by id."""
-    try:
-        with get_db_connection() as conn:
-            result = conn.execute(
-                "DELETE FROM chat_history WHERE id = ?", (item_id,)
-            )
-            conn.commit()
-            if result.rowcount == 0:
-                raise HTTPException(status_code=404, detail=f"Item {item_id} not found.")
-        log.info(f"🗑️  Deleted history item id={item_id}")
-        return JSONResponse({"message": f"Item {item_id} deleted.", "deleted": True})
-    except HTTPException:
-        raise
-    except Exception as e:
-        log.error(f"❌ Delete item error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+@app.delete("/chats/{chat_id}", summary="Delete a specific chat session")
+async def delete_chat(chat_id: int):
+    log.info(f"🗑️  [/chats/{chat_id}] Deletion requested")
+    success = delete_chat_session(chat_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    return {"message": f"Chat {chat_id} deleted successfully.", "deleted": True}
 
 
 # ─── GET /health  ─────────────────────────────────────────────────────────────

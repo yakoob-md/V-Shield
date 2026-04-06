@@ -4,22 +4,34 @@ import {
   Trash2, 
   History, 
   Menu, 
-  X, 
   LifeBuoy, 
   CheckCircle2, 
   AlertTriangle, 
   XCircle, 
   HelpCircle,
   Copy,
-  Volume2
+  Volume2,
+  Plus
 } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/PromptInputBox";
+import CelestialMatrix from "@/components/ui/CelestialMatrix";
 import { useChat } from "@/hooks/useChat";
 import { useVoice } from "@/hooks/useVoice";
 import { cn } from "@/lib/utils";
 
 const App: React.FC = () => {
-  const { messages, history, isLoading, sendMessage, sendVoice, clearHistory } = useChat();
+  const { 
+    currentChatId, 
+    chatSessions, 
+    messages, 
+    isLoading, 
+    createChat, 
+    loadChat, 
+    sendMessage, 
+    sendVoice, 
+    deleteChat 
+  } = useChat();
+  
   const { isRecording, startRecording, stopRecording } = useVoice();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -60,146 +72,170 @@ const App: React.FC = () => {
 
   const getRiskBadgeClass = (level: string) => {
     switch (level) {
-      case "safe": return "bg-green-500/10 text-green-500 border-green-500/20";
-      case "caution": return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-      case "banned": return "bg-red-500/10 text-red-500 border-red-500/20";
-      default: return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "safe": return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "caution": return "bg-amber-50 text-amber-700 border-amber-200";
+      case "banned": return "bg-rose-50 text-rose-700 border-rose-200";
+      default: return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
-  const playResponseAudio = (audioHex: string) => {
-    if (!audioHex) return;
-    const bytes = new Uint8Array(audioHex.length / 2);
-    for (let i = 0; i < audioHex.length; i += 2) {
-      bytes[i / 2] = parseInt(audioHex.substr(i, 2), 16);
-    }
-    const blob = new Blob([bytes], { type: "audio/mpeg" });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.play();
-  };
 
   return (
-    <div className="flex h-screen bg-[#0D0D0D] text-gray-200 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#FFFFFF] text-slate-900 overflow-hidden font-sans relative">
+      {/* Background Animation */}
+      <CelestialMatrix />
+
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed md:relative z-50 flex flex-col bg-[#000000] border-r border-[#262626] transition-all duration-300",
-          sidebarOpen ? "w-[260px]" : "w-0 -ml-1 overflow-hidden"
+          "fixed md:relative z-50 flex flex-col bg-slate-50/80 backdrop-blur-xl border-r border-slate-200 transition-all duration-300",
+          sidebarOpen ? "w-[280px]" : "w-0 -ml-1 overflow-hidden"
         )}
       >
-        <div className="flex flex-col h-full p-3">
+        <div className="flex flex-col h-full p-4">
           <button 
-            className="flex items-center gap-2 w-full p-3 mb-2 rounded-lg hover:bg-[#262626] border border-[#262626] transition-colors"
-            onClick={() => window.location.reload()}
+            className="flex items-center gap-3 w-full p-3 mb-6 rounded-xl bg-slate-200/50 hover:bg-slate-200 border border-slate-200 transition-all group shadow-sm"
+            onClick={() => createChat()}
           >
-            <MessageCircle className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium">New Chat</span>
+            <Plus className="w-5 h-5 text-slate-500 group-hover:text-sky-700 transition-colors" />
+            <span className="text-sm font-semibold text-slate-600 group-hover:text-sky-800">New Chat</span>
           </button>
 
-          <div className="flex-1 overflow-y-auto space-y-1 py-4">
-            <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-3 mb-2">History</div>
-            {history.map((item) => (
+          <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar">
+            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] px-3 mb-4">Chat History</div>
+            {chatSessions.map((session) => (
               <div 
-                key={item.id} 
-                className="group flex items-center justify-between p-3 rounded-lg hover:bg-[#262626] cursor-pointer transition-colors"
-                onClick={() => handleSend(item.user_query)}
+                key={session.id} 
+                className={cn(
+                  "group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border",
+                  currentChatId === session.id 
+                    ? "bg-sky-100/50 border-sky-200 shadow-sm" 
+                    : "bg-transparent border-transparent hover:bg-slate-100"
+                )}
+                onClick={() => loadChat(session.id)}
               >
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <History className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  <span className="text-xs truncate text-gray-400">{item.user_query}</span>
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <MessageCircle className={cn("w-4 h-4 flex-shrink-0", currentChatId === session.id ? "text-sky-600" : "text-slate-400")} />
+                  <span className={cn("text-xs truncate font-medium", currentChatId === session.id ? "text-sky-900" : "text-slate-500 group-hover:text-slate-700")}>
+                    {session.title}
+                  </span>
                 </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); deleteChat(session.id); }}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 rounded-lg text-gray-500 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
 
-          <div className="mt-auto pt-4 border-t border-[#262626]">
-            <button 
-               onClick={clearHistory}
-               className="flex items-center gap-3 w-full p-3 rounded-lg hover:bg-[#262626] text-red-400/80 hover:text-red-400 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="text-xs font-medium">Clear history</span>
-            </button>
-            <div className="flex items-center gap-3 w-full p-3 mt-1 rounded-lg text-gray-500 italic">
-               <LifeBuoy className="w-4 h-4" />
-               <span className="text-[10px]">NADA Aligned Assistant</span>
+          <div className="mt-auto pt-6 border-t border-slate-200">
+            <div className="flex items-center gap-3 w-full p-4 rounded-2xl bg-slate-100/50 border border-slate-200">
+               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center p-[1px]">
+                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                    <LifeBuoy className="w-4 h-4 text-sky-700/70" />
+                 </div>
+               </div>
+               <div className="flex flex-col">
+                 <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Athlete Shield</span>
+                 <span className="text-[9px] text-slate-500">NADA Aligned v2.0</span>
+               </div>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col relative overflow-hidden h-full">
+      <main className="flex-1 flex flex-col relative overflow-hidden h-full z-10">
         {/* Header */}
-        <header className="flex items-center justify-between p-4 border-b border-[#262626] glass-effect">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between p-5 border-b border-slate-200 bg-white/40 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors md:hidden">
+               <Menu className="w-5 h-5" />
+             </button>
              <div>
-               <h1 className="text-sm font-bold bg-gradient-to-r from-orange-400 via-white to-green-400 bg-clip-text text-transparent">Clean Sport सहायक</h1>
-               <p className="text-[10px] text-gray-500 tracking-wider">Anti-Doping Assistant for Rural Indian Athletes</p>
+               <h1 className="text-base font-black tracking-tighter bg-gradient-to-r from-sky-700 via-indigo-800 to-sky-900 bg-clip-text text-transparent uppercase">Clean Sport सहायक</h1>
+               <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-1.5 h-1.5 bg-sky-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(2,132,199,0.3)]" />
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active Protection Layer</span>
+               </div>
              </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-[#1A1A1A] rounded-full border border-[#262626]">
-             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-             <span className="text-[10px] font-medium text-gray-400 uppercase tracking-tighter">Live Support</span>
+          <div className="flex items-center gap-4">
+             <div className="hidden lg:flex flex-col items-end mr-4">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Current Session</span>
+                <span className="text-[11px] text-slate-700 font-medium truncate max-w-[200px]">
+                  {chatSessions.find(s => s.id === currentChatId)?.title || "Select or start a chat"}
+                </span>
+             </div>
+             <button className="p-2.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-400 hover:text-slate-600 transition-all shadow-sm">
+                <History className="w-4 h-4" />
+             </button>
           </div>
         </header>
 
         {/* Chat Feed */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-0 py-8 space-y-8 no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 md:px-0 py-10 space-y-12 no-scrollbar scroll-smooth">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full opacity-30 select-none pointer-events-none">
-               <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
-                  <MessageCircle className="w-8 h-8 text-white" />
+            <div className="flex flex-col items-center justify-center h-full opacity-60 select-none pointer-events-none animate-in fade-in duration-1000">
+               <div className="w-24 h-24 bg-sky-50 rounded-[2rem] flex items-center justify-center mb-6 border border-sky-100 shadow-xl rotate-12 transition-transform hover:rotate-0">
+                  <MessageCircle className="w-10 h-10 text-sky-600" />
                </div>
-               <h2 className="text-xl font-bold text-white mb-2 tracking-tighter">Namaste, Khiladi!</h2>
-               <p className="text-xs text-gray-400">Poochiye koi bhi sawaal doping aur supplements ke baare mein.</p>
+               <h2 className="text-3xl font-black text-slate-800 mb-3 tracking-tighter uppercase">Athlete Assistant</h2>
+               <p className="text-xs text-slate-500 max-w-sm text-center leading-relaxed font-medium">
+                 Poochiye koi bhi sawaal doping, supplements, ya medications ke baare mein. 
+                 <span className="block mt-2 text-[10px] text-sky-700/80 uppercase font-black tracking-widest">WADA & NADA Verified Guidance.</span>
+               </p>
             </div>
           ) : (
-            <div className="max-w-2xl mx-auto space-y-12 pb-24">
-              {messages.map((msg) => (
-                <div key={msg.id} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* User Question */}
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="bg-[#1A1A1A] border border-[#333333] px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%] shadow-2xl">
-                      <p className="text-sm text-gray-100 leading-relaxed font-medium tracking-tight whitespace-pre-wrap">{msg.user_query}</p>
+            <div className="max-w-3xl mx-auto space-y-16 pb-32">
+              {messages.map((msg, idx) => (
+                <div key={msg.id || idx} className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  {msg.role === 'user' ? (
+                    /* User Question */
+                    <div className="flex flex-col items-end gap-3 translate-x-2">
+                      <div className="bg-sky-50 border border-sky-100 px-6 py-4 rounded-[1.5rem] rounded-tr-[0.2rem] max-w-[85%] shadow-md">
+                        <p className="text-sm text-slate-800 leading-relaxed font-medium tracking-tight whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mr-2">You</span>
                     </div>
-                  </div>
-
-                  {/* AI Response */}
-                  <div className="flex flex-col items-start gap-4">
-                    <div className="flex items-center gap-3 px-2">
-                       <div className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase", getRiskBadgeClass(msg.risk_level))}>
-                         {getRiskIcon(msg.risk_level)}
-                         {msg.risk_level}
-                       </div>
-                       <span className="text-[10px] text-gray-600 font-mono tracking-tighter">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                  ) : (
+                    /* AI Response */
+                    <div className="flex flex-col items-start gap-5 -translate-x-2">
+                      <div className="flex items-center gap-3 px-3">
+                         <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-tighter shadow-sm", getRiskBadgeClass(msg.risk_level))}>
+                           {getRiskIcon(msg.risk_level)}
+                           {msg.risk_level}
+                         </div>
+                         <span className="text-[10px] text-gray-700 font-mono font-bold">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      
+                      <div className="group relative w-full">
+                         <div className="absolute -inset-1 bg-gradient-to-r from-sky-600/10 via-transparent to-indigo-600/10 rounded-[2rem] opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-500 -z-10" />
+                         <div className="bg-white border border-slate-100 px-8 py-7 rounded-[2rem] rounded-tl-[0.2rem] shadow-lg w-full">
+                            <p className="text-[15px] text-slate-800 leading-9 font-normal tracking-wide whitespace-pre-wrap selection:bg-sky-100">
+                               {msg.content}
+                            </p>
+                            <div className="flex items-center gap-4 mt-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                               <button 
+                                 onClick={() => copyToClipboard(msg.content)}
+                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-500 hover:text-sky-700 transition-all transform active:scale-95 shadow-sm"
+                               >
+                                 <Copy className="w-3.5 h-3.5" />
+                                 <span className="text-[10px] font-bold uppercase">Copy</span>
+                               </button>
+                               <button 
+                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 text-slate-500 hover:text-sky-700 transition-all transform active:scale-95 shadow-sm"
+                               >
+                                  <Volume2 className="w-3.5 h-3.5" />
+                                  <span className="text-[10px] font-bold uppercase">Play</span>
+                               </button>
+                            </div>
+                         </div>
+                      </div>
                     </div>
-                    
-                    <div className="group relative w-full">
-                       <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-800 to-transparent rounded-3xl opacity-20 blur-sm -z-10" />
-                       <div className="bg-[#000000] border border-[#262626] px-6 py-5 rounded-3xl rounded-tl-sm shadow-2xl w-full">
-                          <p className="text-sm text-gray-300 leading-8 font-normal tracking-wide whitespace-pre-wrap selection:bg-orange-500/30">
-                            {msg.ai_response}
-                          </p>
-                          <div className="flex items-center gap-4 mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                             <button 
-                               onClick={() => copyToClipboard(msg.ai_response)}
-                               className="p-2 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] border border-[#262626] text-gray-500 hover:text-white transition-all transform hover:scale-105"
-                             >
-                               <Copy className="w-3.5 h-3.5" />
-                             </button>
-                             <button 
-                               onClick={() => (msg as any).audio_hex && playResponseAudio((msg as any).audio_hex)}
-                               className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1A1A1A] hover:bg-[#262626] border border-[#262626] text-gray-500 hover:text-white transition-all transform hover:scale-105"
-                             >
-                                <Volume2 className="w-3.5 h-3.5" />
-                                <span className="text-[10px] font-bold tracking-tighter uppercase">Listen</span>
-                             </button>
-                          </div>
-                       </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               ))}
               <div ref={chatEndRef} />
@@ -208,34 +244,59 @@ const App: React.FC = () => {
         </div>
 
         {/* Input Area */}
-        <div className="w-full absolute bottom-0 left-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/90 to-transparent pt-32 pb-4 px-4 md:px-0">
-           <div className="max-w-2xl mx-auto relative px-2 md:px-0">
+        <div className="w-full absolute bottom-0 left-0 bg-gradient-to-t from-white via-white/95 to-transparent pt-32 pb-6 px-4 md:px-0">
+           <div className="max-w-3xl mx-auto relative px-2 md:px-0">
              {isLoading && (
-               <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-[#1A1A1A] border border-[#333333] px-4 py-2 rounded-full shadow-2xl animate-pulse">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
-                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Thinking</span>
+               <div className="absolute -top-14 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-xl px-6 py-2.5 rounded-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-sky-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <div className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] ml-1">Analyzing Data</span>
                </div>
              )}
+             
              <PromptInputBox 
                onSend={handleSend} 
                isLoading={isLoading} 
                isRecording={isRecording}
                onStartRecording={startRecording}
                onStopRecording={handleVoiceSend}
-               placeholder="Poochiye koi bhi sawaal..."
+               placeholder="Poochiye koi bhi sawaal (e.g., Is BCAA safe?)..."
              />
-             <p className="mt-4 text-center text-[9px] text-gray-600 font-medium tracking-tighter uppercase">
-               Expert advice confirmed with NADA & WADA guidelines · Be Safe Khiladi
-             </p>
+             
+             <div className="mt-5 flex items-center justify-center gap-6 opacity-40">
+               <div className="flex items-center gap-1.5">
+                 <CheckCircle2 className="w-3 h-3 text-green-500" />
+                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">WADA Code 2024</span>
+               </div>
+               <div className="flex items-center gap-1.5">
+                 <CheckCircle2 className="w-3 h-3 text-orange-500" />
+                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">NADA Verified</span>
+               </div>
+               <div className="flex items-center gap-1.5">
+                 <XCircle className="w-3 h-3 text-red-500" />
+                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">Anti-Doping Shield</span>
+               </div>
+             </div>
            </div>
         </div>
       </main>
 
       <style>{`
-        .glass-effect {
-          background: rgba(13, 13, 13, 0.8);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.1);
         }
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -244,16 +305,6 @@ const App: React.FC = () => {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slide-in {
-           from { transform: translateY(10px); opacity: 0; }
-           to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-fade-in { animation: fade-in 0.5s ease-out; }
-        .animate-slide-in { animation: slide-in 0.4s ease-out; }
       `}</style>
     </div>
   );

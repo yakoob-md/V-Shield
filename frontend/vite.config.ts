@@ -15,6 +15,7 @@ export default defineConfig({
       '/verify-text': 'http://localhost:8000',
       '/history': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      '/chats': 'http://localhost:8000',
     }
   }
 })
