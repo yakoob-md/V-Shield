@@ -301,15 +301,18 @@ def detect_language(text: str) -> str:
 def parse_risk_level(response_text: str) -> str:
     """
     Extracts the risk level from LLM response text.
-    Mirrors the frontend detectRisk() function exactly so DB and UI stay in sync.
+    Only checks the start of the response to avoid false positives from words
+    appearing in the explanation.
     """
-    if re.search(r'BANNED|❌', response_text, re.IGNORECASE):
+    # Normalize and check the first 20 characters for the tag
+    start_text = response_text[:20].strip()
+    if re.search(r'BANNED|❌', start_text, re.IGNORECASE):
         return "banned"
-    if re.search(r'CAUTION|⚠️', response_text, re.IGNORECASE):
+    if re.search(r'CAUTION|⚠️', start_text, re.IGNORECASE):
         return "caution"
-    if re.search(r'SAFE|✅', response_text, re.IGNORECASE):
+    if re.search(r'SAFE|✅', start_text, re.IGNORECASE):
         return "safe"
-    if re.search(r'UNKNOWN|❓', response_text, re.IGNORECASE):
+    if re.search(r'UNKNOWN|❓', start_text, re.IGNORECASE):
         return "unknown"
     return "caution"   # default: be cautious when uncertain
 
