@@ -229,7 +229,7 @@ const App: React.FC = () => {
           ) : (
             <div className="max-w-4xl mx-auto space-y-10 pb-40">
               {messages.map((msg, idx) => (
-                <div key={msg.id || idx} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div key={msg.id || idx} className="animate-in fade-in slide-in-from-bottom-5 duration-300">
                   {msg.role === 'user' ? (
                     /* User Question */
                     <div className="flex flex-col items-end gap-3 pr-4">
@@ -255,12 +255,12 @@ const App: React.FC = () => {
                       </div>
                       
                       <div className="group relative w-full pr-8">
-                         <div className="absolute -inset-2 bg-gradient-to-r from-sky-500/20 via-indigo-500/10 to-purple-500/20 rounded-[2.5rem] opacity-0 group-hover:opacity-100 blur-2xl transition-all duration-700 pointer-events-none" />
+                         <div className="absolute -inset-2 bg-gradient-to-r from-sky-500/20 via-indigo-500/10 to-purple-500/20 rounded-[2.5rem] opacity-0 group-hover:opacity-100 blur-xl transition-all duration-200 pointer-events-none will-change-[transform,opacity]" />
                          <div className="relative glass-card px-10 py-8 rounded-[2.5rem] rounded-tl-lg shadow-2xl w-full">
                             <p className="text-[16px] text-slate-100 leading-9 font-medium tracking-wide whitespace-pre-wrap selection:bg-sky-500/30">
                                {msg.content}
                             </p>
-                            <div className="flex items-center gap-4 mt-8 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                            <div className="flex items-center gap-4 mt-8 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-2 group-hover:translate-y-0 will-change-[transform,opacity]">
                                <button 
                                  onClick={() => copyToClipboard(msg.content)}
                                  className="glass-button flex items-center gap-2 px-5 py-2.5 rounded-2xl text-slate-300 hover:text-sky-400 font-black uppercase text-[10px] shadow-lg shadow-black/40"
@@ -291,8 +291,8 @@ const App: React.FC = () => {
         </div>
 
         {/* Input Area */}
-        <div className="w-full absolute bottom-0 left-0 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent pt-32 pb-8 px-6">
-           <div className="max-w-4xl mx-auto relative">
+        <div className="w-full absolute bottom-0 left-0 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent pt-32 pb-8 px-6 pointer-events-none z-20">
+           <div className="max-w-4xl mx-auto relative pointer-events-auto">
              {isLoading && (
                <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex items-center gap-4 glass-panel border-sky-500/20 shadow-2xl shadow-sky-500/10 px-8 py-3 rounded-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex gap-2">

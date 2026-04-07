@@ -13,6 +13,7 @@ import logging
 from contextlib import asynccontextmanager
 from io import BytesIO
 from typing import Optional
+from functools import lru_cache
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -291,6 +292,7 @@ def transcribe_audio(audio_bytes: bytes) -> str:
 
 _EMOJI_RE = re.compile(r"[\U0001F300-\U0001F9FF\U00002600-\U000027BF\U0000FE00-\U0000FE0F✅❌⚠️❓🏋️🎙️]+", flags=re.UNICODE)
 
+@lru_cache(maxsize=128)
 def generate_tts(text: str, language: str = "hi") -> Optional[bytes]:
     try:
         from gtts import gTTS
