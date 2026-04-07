@@ -1,137 +1,134 @@
 
+
 # 🏅 Clean Sport – Vernacular Voice-First Anti-Doping RAG App
 
-A production-grade, voice-first RAG assistant for rural Indian athletes.
-Answers supplement and medicine safety queries in **Hinglish**, with
-persistent conversation memory and a CoE-NSTS aligned knowledge base.
+A production-grade, voice-first RAG assistant for rural Indian athletes. This app answers safety queries about medicines and supplements in **Hinglish**, pulling from a specialized knowledge base of WADA prohibited substances and Indian medical data.
 
 ---
 
-## 📁 File Structure
+## 🚀 Key Features
 
-```
-antidoping_app/
-├── build_vector_db.py   # Dataset generator + FAISS index builder (run once)
-├── main.py              # FastAPI backend with RAG + SQLite memory
-├── index.html           # Frontend (Vanilla JS + Tailwind CDN)
-└── README.md
-```
+- **Voice-First Interaction**: Uses Groq-powered Whisper for STT and gTTS for vernacular audio responses.
+- **RAG-Enhanced Brain**: FAISS vector database ensures responses are grounded in official anti-doping facts.
+- **Hinglish Support**: Naturally understands and responds in Romanized Hindi/Hinglish for rural accessibility.
+- **Persistent Memory**: SQLite-based chat history to track entire conversation contexts.
+- **Localized Knowledge**: Built-in data on common Indian branded medicines and CoE-NSTS certified supplements.
 
-After running `build_vector_db.py`, these files are auto-created:
-```
-├── faiss_index.bin      # FAISS vector index
-├── chunks.pkl           # Raw text chunks
-├── datasets.json        # Raw datasets (inspection only)
-└── chat_history.db      # SQLite persistent memory
+---
+
+## 📁 Project Structure
+
+```text
+anti-doping-app/
+├── main.py              # FastAPI Backend (RAG Pipeline + SQLite session management)
+├── build_vector_db.py   # Vector Database Generator (Run once)
+├── requirements.txt     # Python Dependencies
+├── .env                 # Environment variables (Groq Key)
+├── frontend/            # Modern React + Vite + Tailwind Frontend
+│   ├── src/             # Frontend source code
+│   ├── package.json     # Node dependencies
+│   └── vite.config.ts   # Vite configuration
+├── faiss_index.bin      # Generated Vector Index (Created by build script)
+├── chunks.pkl           # Text chunks (Created by build script)
+└── chats_v2.db          # SQLite persistent chat history
 ```
 
 ---
 
-## ⚡ Quick Start
+## 🛠️ Installation & Setup
 
-### 1. Install dependencies
+### 1. Prerequisites
+- **Python 3.9+**
+- **Node.js 18+**
+- **Groq API Key**: Get one free at [console.groq.com](https://console.groq.com)
+
+### 2. Backend Setup
+Activate a virtual environment and install dependencies:
 ```bash
-pip install fastapi uvicorn python-multipart sentence-transformers faiss-cpu groq
+# Create and activate virtual environment
+python -m venv doping_venv
+# Windows:
+doping_venv\Scripts\activate
+# MacOS/Linux:
+source doping_venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### 2. Set your Groq API key
-```bash
-export GROQ_API_KEY="your_groq_key_here"
+### 3. Environment Variables
+Create a `.env` file in the root directory:
+```env
+GROQ_API_KEY="your_groq_api_key_here"
 ```
-Get a free key at: https://console.groq.com
 
-### 3. Build the vector database (run ONCE)
+### 4. Build the Vector Database (Run ONCE)
+Bootstrap the RAG system with the localized dataset:
 ```bash
 python build_vector_db.py
 ```
-Downloads the multilingual embedding model (~400 MB) and creates FAISS index.
+This generates `faiss_index.bin` and `chunks.pkl`.
 
-### 4. Start the backend
+### 5. Frontend Setup
+Install Node dependencies:
 ```bash
-uvicorn main:app --reload --port 8000
+cd frontend
+npm install
 ```
-
-### 5. Open the frontend
-Open `index.html` in any modern browser.
-> If CORS issues arise, serve via: `python -m http.server 3000`
 
 ---
 
-## 🎯 API Endpoints
+## ⚡ Running the Application
 
-| Method | Endpoint       | Description                        |
-|--------|----------------|------------------------------------|
-| POST   | `/verify`      | Submit audio file → get response   |
-| POST   | `/verify-text` | Submit text query → get response   |
-| GET    | `/history`     | Fetch last 10 chat interactions    |
-| DELETE | `/history`     | Clear all chat history             |
-| GET    | `/health`      | System health check                |
+You need two terminals running—one for the backend and one for the frontend.
+
+### Terminal 1: Backend
+```bash
+# Ensure venv is active
+uvicorn main:app --reload --port 8000
+```
+Backend will be available at `http://localhost:8000`.
+
+### Terminal 2: Frontend
+```bash
+cd frontend
+npm run dev
+```
+Frontend will be available at `http://localhost:5173`.
 
 ---
 
 ## 🧠 System Architecture
 
-```
-User (Voice/Text)
-      │
-      ▼
-[ Bhashini STT ] ──── placeholder
-      │
-      ▼
-[ FAISS RAG ] ─── top-3 relevant chunks
-      │
-      ├── [ SQLite ] ─── last 3 interactions (short-term memory)
-      │
-      ▼
-[ Groq LLM: llama-3.3-70b-versatile ]
-      │
-      ▼
-[ SQLite SAVE ] ─── persist interaction (long-term memory)
-      │
-      ▼
-[ Bhashini TTS ] ──── placeholder -- now using whisper and gtts
-      │
-      ▼
-[ Frontend Response + History Update ]
+```mermaid
+graph TD
+    User([User Voice/Text]) --> STT[Groq Whisper STT]
+    STT --> Query[Text Query]
+    Query --> RAG[FAISS Retrieval]
+    RAG --> Context[Top-3 Knowledge Chunks]
+    Context --> LLM[Groq Llama-3.3 LLM]
+    History[(SQLite Memory)] <--> LLM
+    LLM --> Response[Concise Actionable Answer]
+    Response --> TTS[gTTS Vernacular TTS]
+    TTS --> Audio([Audio Response])
+    Response --> UI([Frontend UI])
 ```
 
 ---
 
-## 🔊 Bhashini Integration (Production)
+## 📊 Dataset Coverage
 
-Replace the two placeholder functions in `main.py`:
-
-```python
-# STT – POST https://dhruva-api.bhashini.gov.in/services/inference/asr
-def bhashini_stt(audio_bytes: bytes) -> str:
-    # Send audio_bytes to Bhashini ASR endpoint
-    # Return transcribed Hindi/Hinglish text
-    ...
-
-# TTS – POST https://dhruva-api.bhashini.gov.in/services/inference/tts
-def bhashini_tts(text: str, language: str = "hi") -> bytes:
-    # Send text to Bhashini TTS endpoint
-    # Return audio bytes (WAV/MP3)
-    ...
-```
-
-Register at: https://bhashini.gov.in/ulca
-
----
-
-## 📊 Knowledge Base Coverage
-
-- **52 WADA prohibited substances** with ban status and notes
-- **15 Indian branded medicines** with composition and risk flags
-- **16 Indian supplements** (Ayurvedic + protein + vitamins) with CoE-NSTS status
-- **13 educational knowledge chunks** (strict liability, TUE process, etc.)
+- **52+ WADA Prohibited Substances**: Specific ban status and agricultural contamination notes (Clenbuterol, etc.).
+- **15+ Common Indian Medicines**: Brand-name lookups (Vicks Action 500, Corex, PAN-40).
+- **16+ Indian Supplements**: Detailed risk profiles for Ayurvedic & protein products (Ashwagandha, Shilajit, MuscleBlaze).
+- **Educational Modules**: Strict Liability, TUE Process, and Rural Doctor awareness.
 
 ---
 
 ## 🔒 Safety Design Principles
 
-1. **Fail-safe**: Unknown products → always CAUTION, never assume SAFE
-2. **No hallucination**: LLM instructed to use only RAG context
-3. **Exact 3-sentence output**: Structured for low-literacy comprehension
-4. **Domain restriction**: Off-topic queries rejected with Hindi message
+1. **Safety First**: Any unknown substance is tagged **UNKNOWN ❓** and treated with caution.
+2. **Deterministic Structure**: Every AI response follows a strict 3-sentence format (Risk Tag, Fact, Advice).
+3. **Romanized Output**: LLM is constrained to Latin script to ensure readability on all devices.
+4. **No Hallucinations**: Strict instructions to use *only* provided RAG context or state ignorance.
 

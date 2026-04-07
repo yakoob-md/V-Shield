@@ -16,10 +16,21 @@ export interface Message {
 }
 
 export const useChat = () => {
-  const [currentChatId, setCurrentChatId] = useState<number | null>(null);
+  const [currentChatId, setCurrentChatId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('currentChatId');
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentChatId) {
+      localStorage.setItem('currentChatId', currentChatId.toString());
+    } else {
+      localStorage.removeItem('currentChatId');
+    }
+  }, [currentChatId]);
 
   const fetchChats = useCallback(async () => {
     try {
@@ -37,7 +48,10 @@ export const useChat = () => {
     setIsLoading(true);
     try {
       const res = await fetch(`/chats/${chatId}`);
-      if (!res.ok) throw new Error("Chat not found");
+      if (!res.ok) {
+        localStorage.removeItem('currentChatId');
+        throw new Error("Chat not found");
+      }
       const data = await res.json();
       setMessages(data.messages || []);
       setCurrentChatId(chatId);
@@ -138,8 +152,17 @@ export const useChat = () => {
   }, [currentChatId, fetchChats]);
 
   useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
+    const init = async () => {
+      const sessions = await fetchChats();
+      if (currentChatId) {
+        loadChat(currentChatId);
+      } else if (sessions && sessions.length > 0) {
+        // Auto-load most recent chat if nothing in localStorage
+        loadChat(sessions[0].id);
+      }
+    };
+    init();
+  }, []);
 
   return { 
     currentChatId, 

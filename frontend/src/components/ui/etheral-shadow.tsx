@@ -1,224 +1,6 @@
-You are a senior full-stack engineer and debugging expert.
-
-I have an existing ChatGPT-like chatbot project, but it currently has multiple issues. Your job is to **diagnose, fix, and improve the system step-by-step**.
-
----
-
-## 🚨 CURRENT ISSUES (CRITICAL)
-
-### 1. ❌ Chat History NOT Saving
-
-* Chats are NOT being stored properly
-* Sidebar history is either empty or not persistent
-* Reloading loses conversations
-
----
-
-### 2. ❌ Context NOT Preserved
-
-* Follow-up questions are NOT understood
-* Model behaves like every query is new
-
-### Example:
-
-User: "Should I take creatine?"
-User: "Do I need to take it everyday?"
-
-👉 Expected: Understand "it" = creatine
-👉 Current: No context awareness
-
----
-
-### 3. ❌ Previous Answers NOT Used
-
-* Responses are NOT based on earlier messages
-* No conversation memory being passed to backend / LLM
-
----
-
-### 4. 🎨 Background Animation NOT Applied
-
-* I have attached a background animation code
-* It is NOT properly integrated into UI
-
----
-
-## 🎯 YOUR TASK
-
-You must:
-
-### ✅ Step 1: DIAGNOSE
-
-* Identify EXACT reasons why:
-
-  * Chats are not saving
-  * Context is not preserved
-  * History is not loading
-* Check:
-
-  * Frontend state management
-  * Backend API logic
-  * Database storage
-  * Message format sent to LLM
-
----
-
-### ✅ Step 2: FIX CHAT STORAGE
-
-Ensure:
-
-* Each chat has unique ID
-* Messages are stored like:
-
-```id="clxg65"
-{
-  id,
-  title,
-  messages: [
-    { role: "user", content: "" },
-    { role: "assistant", content: "" }
-  ]
-}
-```
-
-* On every message:
-
-  * Save to DB
-  * Update UI instantly
-
----
-
-### ✅ Step 3: FIX CONTEXT HANDLING
-
-* Send previous messages in API call:
-
-```id="i3u2u0"
-messages = [
-  ...chat_history,
-  { role: "user", content: new_message }
-]
-```
-
-* Limit context intelligently (last N messages)
-
----
-
-### ✅ Step 4: FIX HISTORY LOADING
-
-* Sidebar should:
-
-  * Fetch all chats from backend
-  * Display titles
-  * Load full chat when clicked
-
----
-
-### ✅ Step 5: APPLY BACKGROUND ANIMATION
-
-* Integrate attached animation code into:
-
-  * Main layout (global background)
-* Ensure:
-
-  * Smooth performance
-  * No UI overlap issues
-  * Chat remains readable
-
----
-
-### ✅ Step 6: CLEAN UX
-
-* Ensure:
-
-  * Messages render correctly (no truncation)
-  * Scroll works properly
-  * No UI breaking on multiple chats
-
----
-
-## 📦 OUTPUT FORMAT (VERY IMPORTANT)
-
-You MUST respond in this format:
-
-### 1. 🔍 ROOT CAUSE ANALYSIS
-
-Explain EXACTLY what is broken and why
-
----
-
-### 2. 🛠 FIXES (FILE BY FILE)
-
-For each file:
-
-* Show ORIGINAL problematic code
-* Show FIXED code
-* Clearly label what to replace
-
----
-
-### 3. 🔁 DATA FLOW EXPLANATION
-
-Explain:
-Frontend → Backend → DB → LLM → Response → UI
-
----
-
-### 4. 🎨 BACKGROUND INTEGRATION
-
-Show exactly where to paste animation code
-
----
-
-### 5. ✅ FINAL CHECKLIST
-
-Ensure:
-
-* Chat saving works
-* Context works
-* History loads
-* UI is clean
-
----
-
-## ⚠️ IMPORTANT RULES
-
-* DO NOT give generic advice
-* DO NOT skip debugging
-* GIVE EXACT CODE FIXES
-* Assume I am building step-by-step in VS Code
-* Be precise and practical
-
----
-
-## 🚀 GOAL
-
-After your fix:
-
-* Chats behave like ChatGPT
-* Context is preserved
-* History works perfectly
-* UI is smooth and animated
-
-Start with ROOT CAUSE ANALYSIS.
-
-
-You are given a task to integrate an existing React component in the codebase
-
-The codebase should support:
-- shadcn project structure  
-- Tailwind CSS
-- Typescript
-
-If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
-
-Determine the default path for components and styles. 
-If default path for components is not /components/ui, provide instructions on why it's important to create this folder
-Copy-paste this component to /components/ui folder:
-```tsx
-etheral-shadow.tsx
 'use client';
 
-import React, { useRef, useId, useEffect, CSSProperties } from 'react';
+import { useRef, useId, useEffect, CSSProperties } from 'react';
 import { animate, useMotionValue, AnimationPlaybackControls } from 'framer-motion';
 
 // Type definitions
@@ -272,7 +54,7 @@ const useInstanceId = (): string => {
     return instanceId;
 };
 
-export function Component({
+export function EtheralShadow({
     sizing = 'fill',
     color = 'rgba(128, 128, 128, 1)',
     animation,
@@ -322,9 +104,13 @@ export function Component({
             className={className}
             style={{
                 overflow: "hidden",
-                position: "relative",
-                width: "100%",
-                height: "100%",
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                zIndex: -1,
+                pointerEvents: "none",
                 ...style
             }}
         >
@@ -387,21 +173,6 @@ export function Component({
                 />
             </div>
 
-            <div
-                style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    textAlign: "center",
-                    zIndex: 10
-                }}
-            >
-                <h1 className="md:text-7xl text-6xl lg:text-8xl font-bold text-center text-foreground relative z-20">
-                    Etheral Shadows
-                </h1>
-            </div>
-
             {noise && noise.opacity > 0 && (
                 <div
                     style={{
@@ -417,45 +188,3 @@ export function Component({
         </div>
     );
 }
-
-demo.tsx
-import { Component } from "@/components/ui/etheral-shadow";
-
-const DemoOne = () => {
-  return (
-    <div className="flex w-full h-screen justify-center items-center">
-      <Component
-      color="rgba(128, 128, 128, 1)"
-        animation={{ scale: 100, speed: 90 }}
-        noise={{ opacity: 1, scale: 1.2 }}
-        sizing="fill"
-         />
-    </div>
-  );
-};
-
-export { DemoOne };
-
-```
-
-Install NPM dependencies:
-```bash
-framer-motion
-```
-
-Implementation Guidelines
- 1. Analyze the component structure and identify all required dependencies
- 2. Review the component's argumens and state
- 3. Identify any required context providers or hooks and install them
- 4. Questions to Ask
- - What data/props will be passed to this component?
- - Are there any specific state management requirements?
- - Are there any required assets (images, icons, etc.)?
- - What is the expected responsive behavior?
- - What is the best place to use this component in the app?
-
-Steps to integrate
- 0. Copy paste all the code above in the correct directories
- 1. Install external dependencies
- 2. Fill image assets with Unsplash stock images you know exist
- 3. Use lucide-react icons for svgs or logos if component requires them

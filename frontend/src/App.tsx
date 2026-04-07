@@ -14,7 +14,7 @@ import {
   Plus
 } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/PromptInputBox";
-import CelestialMatrix from "@/components/ui/CelestialMatrix";
+import { EtheralShadow } from "@/components/ui/etheral-shadow";
 import { useChat } from "@/hooks/useChat";
 import { useVoice } from "@/hooks/useVoice";
 import { cn } from "@/lib/utils";
@@ -83,7 +83,13 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-[#FFFFFF] text-slate-900 overflow-hidden font-sans relative">
       {/* Background Animation */}
-      <CelestialMatrix />
+      <EtheralShadow
+        color="rgba(128, 128, 128, 0.1)"
+        animation={{ scale: 100, speed: 90 }}
+        noise={{ opacity: 0.5, scale: 1.2 }}
+        sizing="fill"
+        className="opacity-60"
+      />
 
       {/* Sidebar */}
       <aside 
