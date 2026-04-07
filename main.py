@@ -19,7 +19,7 @@ load_dotenv()
 
 import numpy as np
 import faiss
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -415,6 +415,18 @@ async def get_chat(chat_id: int):
 async def delete_chat(chat_id: int):
     if delete_chat_session(chat_id): return {"deleted": True}
     raise HTTPException(status_code=404, detail="Chat not found")
+
+@app.get("/api/tts")
+async def get_api_tts(text: str = Query(...), lang: str = Query("hi")):
+    """
+    Returns audio bytes for the given text and language.
+    Language defaults to 'hi' to ensure natural Hinglish pronunciation.
+    """
+    tts_lang = "hi" if lang == "hindi" else "en"
+    audio_bytes = generate_tts(text, language=tts_lang)
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="TTS generation failed")
+    return Response(content=audio_bytes, media_type="audio/mpeg")
 
 @app.get("/health")
 async def health():

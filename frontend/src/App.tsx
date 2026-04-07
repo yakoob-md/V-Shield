@@ -34,6 +34,8 @@ const App: React.FC = () => {
   
   const { isRecording, startRecording, stopRecording } = useVoice();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activePlayingId, setActivePlayingId] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -59,6 +61,30 @@ const App: React.FC = () => {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleNarration = async (msgId: number, text: string, lang: string) => {
+    if (activePlayingId === msgId) {
+      audioRef.current?.pause();
+      setActivePlayingId(null);
+      return;
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    console.log("Narration clicked", text); // For debugging logic as requested
+    const url = `http://localhost:8000/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    setActivePlayingId(msgId);
+
+    audio.onended = () => setActivePlayingId(null);
+    audio.play().catch(err => {
+      console.error("Audio playback error:", err);
+      setActivePlayingId(null);
+    });
   };
 
   const getRiskIcon = (level: string) => {
@@ -243,10 +269,14 @@ const App: React.FC = () => {
                                  <span>Copy</span>
                                </button>
                                <button 
-                                 className="glass-button flex items-center gap-2 px-5 py-2.5 rounded-2xl text-slate-300 hover:text-sky-400 font-black uppercase text-[10px] shadow-lg shadow-black/40"
+                                 onClick={() => handleNarration(msg.id, msg.content, msg.language)}
+                                 className={cn(
+                                   "glass-button flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-black/40",
+                                   activePlayingId === msg.id ? "text-sky-400 bg-white/15" : "text-slate-300"
+                                 )}
                                >
-                                  <Volume2 className="w-4 h-4" />
-                                  <span>Narration</span>
+                                  <Volume2 className={cn("w-4 h-4", activePlayingId === msg.id && "animate-pulse")} />
+                                  <span>{activePlayingId === msg.id ? "Stopping..." : "Narration"}</span>
                                </button>
                             </div>
                          </div>
