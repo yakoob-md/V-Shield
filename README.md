@@ -104,5 +104,5 @@ Rural athletes often lack access to professional sports doctors. **Athlete Shiel
 - **CoE-NSTS Supplement Verification**
 
 ---
-Produced with ❤️ by the **Clean Sport Team**. Built for the gold.
+Produced with ❤️ by **Yakub**. Built for the gold.
 
