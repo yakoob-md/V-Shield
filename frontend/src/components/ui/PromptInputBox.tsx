@@ -40,7 +40,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => (
   <textarea
     className={cn(
-      "flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-slate-300",
+      "flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent hover:scrollbar-thumb-white/20",
       className
     )}
     ref={ref}
@@ -132,15 +132,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const variantClasses = {
-      default: "bg-sky-600 hover:bg-sky-700 text-white shadow-sm",
-      outline: "border border-slate-200 bg-transparent hover:bg-slate-50",
-      ghost: "bg-transparent hover:bg-slate-100",
+      default: "bg-sky-500 hover:bg-sky-400 text-white shadow-lg shadow-sky-500/20",
+      outline: "border border-white/10 bg-white/5 hover:bg-white/10 text-slate-300",
+      ghost: "bg-transparent hover:bg-white/5 text-slate-400 hover:text-slate-200",
     };
     const sizeClasses = {
-      default: "h-10 px-4 py-2",
-      sm: "h-8 px-3 text-sm",
-      lg: "h-12 px-6",
-      icon: "h-8 w-8 rounded-full aspect-[1/1]",
+      default: "h-11 px-5 py-2.5",
+      sm: "h-9 px-4 text-sm",
+      lg: "h-13 px-7",
+      icon: "h-9 w-9 rounded-xl",
     };
     return (
       <button
@@ -327,8 +327,8 @@ const PromptInput = React.forwardRef<HTMLDivElement, PromptInputProps>(
           <div
             ref={ref}
             className={cn(
-              "rounded-3xl border border-slate-200 bg-white p-2 shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all duration-300",
-              isLoading && "border-sky-500/50",
+              "rounded-[2.5rem] glass-panel p-3 transition-all duration-500 ease-out",
+              isLoading && "border-sky-500/40 shadow-[0_0_30px_rgba(14,165,233,0.15)]",
               className
             )}
             onDragOver={onDragOver}
@@ -400,6 +400,7 @@ interface PromptInputActionProps extends React.ComponentProps<typeof Tooltip> {
   tooltip: React.ReactNode;
   children: React.ReactNode;
   side?: "top" | "bottom" | "left" | "right";
+  className?: string;
 }
 const PromptInputAction: React.FC<PromptInputActionProps> = ({
   tooltip,
