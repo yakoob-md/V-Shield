@@ -131,7 +131,7 @@ const App: React.FC = () => {
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
               <MessageCircle className="w-6 h-6 text-white" />
             </div>
-            <h2 className="text-xl font-black italic tracking-tighter premium-gradient-text uppercase">Shield AI</h2>
+            <h2 className="text-xl font-black italic tracking-tighter premium-gradient-text uppercase">V-Shield</h2>
           </div>
 
           <button 
@@ -179,7 +179,7 @@ const App: React.FC = () => {
                  </div>
                </div>
                <div className="flex flex-col">
-                 <span className="text-[11px] font-black text-white uppercase tracking-widest">Athlete Shield</span>
+                 <span className="text-[11px] font-black text-white uppercase tracking-widest">V-Shield AI</span>
                  <span className="text-[10px] text-slate-400 font-medium">NADA Verified v2.1</span>
                </div>
             </div>
@@ -196,10 +196,10 @@ const App: React.FC = () => {
                <Menu className="w-5 h-5" />
              </button>
              <div>
-               <h1 className="text-xl font-black tracking-tight premium-gradient-text uppercase">NADA Assistant</h1>
+               <h1 className="text-xl font-black tracking-tight premium-gradient-text uppercase">V-Shield AI</h1>
                <div className="flex items-center gap-2 mt-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Neural Shield Active</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">V-Shield Active</span>
                </div>
              </div>
           </div>
@@ -220,7 +220,7 @@ const App: React.FC = () => {
                <div className="w-32 h-32 glass-card rounded-[2.5rem] flex items-center justify-center mb-8 border border-white/20 shadow-2xl rotate-6 transition-transform hover:rotate-0 duration-500">
                   <MessageCircle className="w-14 h-14 text-sky-400" />
                </div>
-               <h2 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase text-center">Guardian of Clean Sport</h2>
+               <h2 className="text-4xl font-black text-white mb-4 tracking-tighter uppercase text-center">V-Shield: Clean Sport Guardian</h2>
                <p className="text-sm text-slate-400 max-w-md text-center leading-relaxed font-bold">
                  Poochiye koi bhi sawaal doping, supplements, ya medications ke baare mein. 
                  <span className="block mt-4 text-[11px] text-sky-400 uppercase font-black tracking-[0.3em]">Built for the modern road athlete.</span>
@@ -324,7 +324,7 @@ const App: React.FC = () => {
                </div>
                <div className="flex items-center gap-2">
                  <XCircle className="w-4 h-4 text-rose-500" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Zero Doping Shield</span>
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">V-Shield Protocol</span>
                </div>
              </div>
            </div>

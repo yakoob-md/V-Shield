@@ -14,10 +14,13 @@
     .flow-line { stroke: #6366F1; stroke-width: 2; stroke-dasharray: 5, 5; animation: flow 1s linear infinite; }
     .arrow-head { fill: #6366F1; }
     .pulse-effect { animation: pulse 2s ease-in-out infinite; }
+    .title-text { fill: #6366F1; font-family: 'Inter', sans-serif; font-size: 24px; font-weight: 900; letter-spacing: -1px; }
   </style>
 
   <!-- Background -->
   <rect width="800" height="400" fill="#0F172A" rx="12" />
+  
+  <text x="400" y="40" class="title-text" text-anchor="middle">V-SHIELD RAG ARCHITECTURE</text>
 
   <!-- Nodes -->
   <!-- User Input -->
@@ -47,7 +50,7 @@
   <!-- Output -->
   <g class="node" transform="translate(650, 175)">
     <rect class="node-rect" width="120" height="50" style="stroke: #3B82F6;" />
-    <text x="60" y="30" class="node-text">Premium UI</text>
+    <text x="60" y="30" class="node-text">V-Shield UI</text>
   </g>
 
   <!-- Flow Lines -->
