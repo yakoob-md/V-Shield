@@ -142,7 +142,7 @@ async def lifespan(app: FastAPI):
 # ══════════════════════════════════════════════════════════════════════════════
 
 app = FastAPI(
-    title="Anti-Doping Rural Athlete Assistant",
+    title="V-Shield: Vernacular Anti-Doping Assistant",
     lifespan=lifespan,
 )
 
