@@ -1,6 +1,5 @@
 # 🛡️ V-Shield AI: Vernacular Anti-Doping Assistant
 
-![V-Shield Hero Banner](./hero_banner.png)
 
 [![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen.svg)](https://github.com/yakoob-md/v-shield-ai)
 [![Stack: FastAPI + React + FAISS](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20FAISS-blue.svg)](https://fastapi.tiangolo.com/)
