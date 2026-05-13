@@ -2,7 +2,7 @@
 
 ![V-Shield Hero Banner](./hero_banner.png)
 
-[![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen.svg)](https://github.com/yakoob-md/antidoping-assistant)
+[![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen.svg)](https://github.com/yakoob-md/v-shield-ai)
 [![Stack: FastAPI + React + FAISS](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20FAISS-blue.svg)](https://fastapi.tiangolo.com/)
 [![Design: Midnight Glass](https://img.shields.io/badge/Design-Midnight%20Glass-purple.svg)](https://tailwindcss.com/)
 [![Inference: Groq LPU](https://img.shields.io/badge/Inference-Groq%20LPU-orange.svg)](https://groq.com/)
