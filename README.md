@@ -8,8 +8,6 @@
 
 > **"The ultimate safety companion for the modern road athlete."**
 > V-Shield AI is a production-grade, voice-first RAG (Retrieval-Augmented Generation) assistant designed to protect rural and professional Indian athletes from unintentional doping through instant, vernacular advice.
-
-a
 ---
 
 ## ✨ The "Wow" Factor: Premium Excellence
