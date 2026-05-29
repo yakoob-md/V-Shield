@@ -10,7 +10,7 @@
 > V-Shield AI is a production-grade, voice-first RAG (Retrieval-Augmented Generation) assistant designed to protect rural and professional Indian athletes from unintentional doping through instant, vernacular advice.
 ---
 
-## ✨ The "Wow" Factor: Premium Excellenceee
+## ✨ The "Wow" Factor: Premium Excellence
 
 V-Shield isn't just a chatbot; it's a high-end digital mentor. Our latest update introduces a **Premium Midnight-Glass** interface designed to wow users at first glance. 
 
