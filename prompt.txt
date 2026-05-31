@@ -1,93 +1,536 @@
-You are an expert full-stack developer specializing in debugging UI + backend integrations.
+# ROLE
 
-I have a chatbot application where:
+You are a Principal Software Architect, Senior Product Manager, Startup CTO, QA Lead, DevOps Engineer, Security Auditor, and UI/UX Expert.
 
-Each generated answer has a "Narration" (Text-to-Speech) button
-When I click the narration button → nothing happens
-The expected behavior is:
-It should read out the answer aloud
-If the answer is in English → read in natural English voice
-If the answer is in Hinglish → read it in Hinglish pronunciation (not robotic English)
-🎯 YOUR TASK
-1. ROOT CAUSE ANALYSIS
+Your task is to perform a COMPLETE, BRUTALLY HONEST, END-TO-END AUDIT of my project.
 
-Carefully analyze and identify ALL possible reasons why narration is not working:
+Do not assume anything works.
 
-Is the click event properly attached?
-Is the function being triggered?
-Is the TTS API being called?
-Any console errors?
-Is browser speech API (speechSynthesis) used incorrectly?
-Is there an async issue or missing permissions?
-Is state/context not passing the answer text correctly?
-Is the narration button mapped to the correct message?
-2. FIX IMPLEMENTATION (MANDATORY)
+Verify everything.
 
-Provide complete working code fixes, including:
+Challenge every design decision.
 
-✅ Frontend Fix
-Proper event listener for narration button
-Extracting correct message text
-Handling multiple messages (important!)
-Prevent overlapping speech (stop previous before new)
-Show loading / speaking state (optional but preferred)
-✅ TTS Implementation
+Treat this as if you were evaluating a startup product before investing $1M into it.
 
-Use one of:
+---
 
-Browser API: window.speechSynthesis
-OR
-Better: suggest upgrade to Google TTS / ElevenLabs (optional)
+# OBJECTIVES
 
-Must include:
+I want you to:
 
-speechSynthesis.cancel();
-const utterance = new SpeechSynthesisUtterance(text);
-speechSynthesis.speak(utterance);
-3. HINGLISH SUPPORT (IMPORTANT)
+1. Fully understand the project.
+2. Understand the original problem statement.
+3. Understand what the project claims to solve.
+4. Verify whether it actually solves the problem.
+5. Identify every gap in implementation.
+6. Identify missing features.
+7. Identify architectural weaknesses.
+8. Identify UI/UX issues.
+9. Identify deployment issues.
+10. Identify scalability concerns.
+11. Identify security vulnerabilities.
+12. Provide concrete fixes.
+13. Provide implementation plans.
+14. Provide an honest industry-level evaluation.
 
-Implement logic:
+Do NOT sugarcoat anything.
 
-Detect Hinglish (mixed Hindi-English)
-Use appropriate voice:
-Prefer hi-IN or Indian English voice
-Ensure pronunciation sounds natural
+If something is bad, say it is bad.
 
-Example:
+If something is unnecessary, say it is unnecessary.
 
-"Tum kya kar rahe ho?" → should sound Hindi
-"This is important samjho" → mixed Hinglish tone
-4. HANDLE EDGE CASES
-Multiple narration clicks
-Switching between messages
-Long responses (chunk if needed)
-Stop button support (if possible)
-5. CODE STRUCTURE (VERY IMPORTANT)
+If something is impressive, explain why.
 
-Explain clearly:
+---
 
-Which file to edit (e.g., index.html, main.js, chat.js)
-What EXACT code to replace
-What to add
-Label sections clearly:
-// OLD CODE
-// NEW CODE
-6. DEBUGGING SUPPORT
+# PHASE 1 — PROJECT UNDERSTANDING
 
-Add console logs:
+First:
 
-console.log("Narration clicked", text);
+* Study the entire codebase.
+* Study every folder.
+* Study every file.
+* Study every dependency.
+* Study the architecture.
+* Study all APIs.
+* Study all databases.
+* Study all frontend components.
+* Study all backend services.
+* Study deployment configurations.
+* Study environment variables.
+* Study documentation.
+* Study README files.
+* Study CI/CD files.
+* Study Docker files.
+* Study cloud deployment files.
+* Study database schemas.
 
-Also mention:
+Create:
 
-How to test in browser
-What to check in console
-⚡ EXPECTED OUTPUT
-Clear diagnosis
-Fully working code
-Hinglish + English narration support
-Clean UI behavior (no bugs)
-⚠️ IMPORTANT
+## Project Understanding Report
 
-Do NOT give generic explanation.
-Give direct working fix with code and exact integration steps
+Include:
+
+### Project Purpose
+
+What problem is this project trying to solve?
+
+### Target Users
+
+Who benefits from this?
+
+### Current Features
+
+List every implemented feature.
+
+### Missing Features
+
+List features that appear intended but are incomplete.
+
+### Technical Stack
+
+Explain:
+
+* Frontend
+* Backend
+* Database
+* Authentication
+* APIs
+* Hosting
+* DevOps
+
+Create architecture diagrams if necessary.
+
+---
+
+# PHASE 2 — PROBLEM STATEMENT VALIDATION
+
+I want an honest answer:
+
+## Does This Project Actually Solve The Problem?
+
+Evaluate:
+
+### Problem Definition
+
+* Is the problem real?
+* Is it important?
+* Who experiences it?
+
+### Current Solution Fit
+
+Rate:
+
+* Problem Understanding (1–10)
+* Solution Effectiveness (1–10)
+* Real-World Applicability (1–10)
+* User Value (1–10)
+
+Then answer:
+
+### If I launched this today:
+
+* Would users use it?
+* Why?
+* Why not?
+
+### What is preventing adoption?
+
+List every blocker.
+
+---
+
+# PHASE 3 — FUNCTIONAL AUDIT
+
+Test every workflow.
+
+For every feature:
+
+## Feature Audit
+
+### Expected Behavior
+
+### Actual Behavior
+
+### Issues Found
+
+### Severity
+
+* Critical
+* High
+* Medium
+* Low
+
+### Recommended Fix
+
+### Implementation Steps
+
+Actually trace through the code.
+
+Do not just guess.
+
+Verify whether:
+
+* Frontend works
+* Backend works
+* APIs work
+* Database integration works
+* Authentication works
+* State management works
+* Error handling works
+* Validation works
+* Edge cases are handled
+
+Provide evidence from code.
+
+---
+
+# PHASE 4 — ARCHITECTURE AUDIT
+
+Evaluate:
+
+### Code Quality
+
+Rate 1–10.
+
+### Scalability
+
+Rate 1–10.
+
+### Maintainability
+
+Rate 1–10.
+
+### Modularity
+
+Rate 1–10.
+
+### Extensibility
+
+Rate 1–10.
+
+### Production Readiness
+
+Rate 1–10.
+
+Identify:
+
+* Technical debt
+* Code smells
+* Tight coupling
+* Duplicate logic
+* Anti-patterns
+* Performance bottlenecks
+
+For each issue:
+
+* Explain impact
+* Explain risk
+* Explain fix
+* Show implementation approach
+
+---
+
+# PHASE 5 — UI/UX AUDIT
+
+Act as a Senior Product Designer.
+
+Audit:
+
+## Visual Design
+
+* Consistency
+* Hierarchy
+* Spacing
+* Typography
+* Colors
+* Accessibility
+
+## User Experience
+
+* Navigation
+* User Flow
+* Discoverability
+* Ease of Use
+* Cognitive Load
+
+## Mobile Responsiveness
+
+* Responsive Issues
+* Layout Breaks
+* Accessibility Issues
+
+## User Journey
+
+For every major workflow:
+
+* Count clicks
+* Identify friction
+* Identify confusion
+
+Provide:
+
+### Current UX Score (1–10)
+
+### Industry Benchmark Comparison
+
+Compare against:
+
+* Modern SaaS products
+* YC Startup products
+* Enterprise dashboards
+
+Then propose:
+
+## Complete UI/UX Improvement Roadmap
+
+Include:
+
+* Quick Wins
+* Medium Improvements
+* Major Redesign Opportunities
+
+Also generate wireframe suggestions.
+
+---
+
+# PHASE 6 — SECURITY AUDIT
+
+Act as a Security Engineer.
+
+Check:
+
+* Authentication
+* Authorization
+* JWT Handling
+* Secrets Management
+* Environment Variables
+* Input Validation
+* API Security
+* MongoDB Security
+* Rate Limiting
+* XSS
+* CSRF
+* SQL/NoSQL Injection
+* Dependency Vulnerabilities
+* File Upload Risks
+
+For each issue:
+
+* Severity
+* Exploit Scenario
+* Fix
+* Implementation Steps
+
+---
+
+# PHASE 7 — PERFORMANCE AUDIT
+
+Evaluate:
+
+* Frontend Performance
+* Backend Performance
+* Database Queries
+* API Response Times
+* Memory Usage
+* Caching Strategy
+
+Identify:
+
+* Bottlenecks
+* Slow Queries
+* Unnecessary Re-renders
+* Large Bundle Sizes
+* Network Inefficiencies
+
+Provide optimization roadmap.
+
+---
+
+# PHASE 8 — DEPLOYMENT AUDIT
+
+I want a deployment-readiness assessment.
+
+Review:
+
+* Environment variables
+* Build process
+* Production configuration
+* Docker
+* Reverse proxies
+* CI/CD
+* Database connectivity
+* Cloud hosting setup
+
+Answer:
+
+### Can this be deployed right now?
+
+If not:
+
+Why not?
+
+List every blocker.
+
+Then provide:
+
+## Production Deployment Plan
+
+Include:
+
+### Option 1
+
+Free Deployment
+
+### Option 2
+
+Low Cost Deployment
+
+### Option 3
+
+Production Scale Deployment
+
+For each:
+
+* Services to use
+* Costs
+* Configuration
+* Risks
+* Benefits
+
+Also provide:
+
+## Zero-Downtime Deployment Strategy
+
+---
+
+# PHASE 9 — STARTUP & RESUME IMPACT ANALYSIS
+
+Evaluate:
+
+### Resume Value
+
+Rate 1–10.
+
+### Recruiter Impact
+
+Rate 1–10.
+
+### SDE Hiring Impact
+
+Rate 1–10.
+
+### AI/ML Hiring Impact
+
+Rate 1–10.
+
+### Startup Potential
+
+Rate 1–10.
+
+Answer:
+
+* Would this impress recruiters?
+* Would this impress founders?
+* Would this impress investors?
+* Why?
+* Why not?
+
+---
+
+# PHASE 10 — GAP ANALYSIS
+
+Create a table:
+
+| Area | Current State | Desired State | Gap | Fix |
+| ---- | ------------- | ------------- | --- | --- |
+
+Cover:
+
+* Product
+* UX
+* Engineering
+* Security
+* Performance
+* Scalability
+* Deployment
+* Business Value
+
+---
+
+# PHASE 11 — ENHANCEMENT ROADMAP
+
+Create:
+
+## 30-Day Plan
+
+## 60-Day Plan
+
+## 90-Day Plan
+
+Prioritize:
+
+### Must Have
+
+### Should Have
+
+### Nice To Have
+
+Estimate:
+
+* Effort
+* Complexity
+* Impact
+
+---
+
+# PHASE 12 — FINAL VERDICT
+
+Give a brutally honest conclusion.
+
+Include:
+
+### Overall Project Score (0–100)
+
+### Technical Score
+
+### Product Score
+
+### UI/UX Score
+
+### Security Score
+
+### Scalability Score
+
+### Deployment Score
+
+### Resume Score
+
+### Startup Potential Score
+
+Then answer:
+
+1. Is this project genuinely solving the problem?
+2. Is it production ready?
+3. Would real users adopt it?
+4. What are the biggest weaknesses?
+5. What are the biggest strengths?
+6. What should be fixed immediately?
+7. What should be built next?
+8. Would you personally approve this for production? Why or why not?
+
+IMPORTANT:
+
+Do not provide generic advice.
+
+Reference actual files, components, functions, APIs, and architecture decisions from the codebase.
+
+Every criticism must include:
+
+* Evidence
+* Root Cause
+* Impact
+* Fix
+* Implementation Plan
+
+I want a complete engineering, product, startup, UI/UX, security, deployment, and business audit report.
