@@ -7,21 +7,38 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout full repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
 
       - name: Configure git identity
         run: |
-          git config --global user.email "deploy@github-actions.com"
-          git config --global user.name "GitHub Actions"
+          git config --global user.email "ci@github-actions.com"
+          git config --global user.name "GitHub Actions Bot"
 
-      - name: Push to Hugging Face Space
+      - name: Add Hugging Face remote and push
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push --force https://yakub-md:${HF_TOKEN}@huggingface.co/spaces/yakub-md/v-shield HEAD:main
+          # Validate token is present
+          if [ -z "$HF_TOKEN" ]; then
+            echo "❌ ERROR: HF_TOKEN secret is not set in GitHub repository secrets!"
+            exit 1
+          fi
+          echo "✅ HF_TOKEN is set (length: ${#HF_TOKEN})"
 
+          # Set HF as a named remote to avoid credential issues with inline URLs
+          git remote add hf_space "https://yakub-md:${HF_TOKEN}@huggingface.co/spaces/yakub-md/v-shield"
+
+          # Verify remote was added
+          echo "📡 Configured remotes:"
+          git remote -v | grep -v "HF_TOKEN" | sed 's/:[^@]*@/:***@/g'
+
+          # Push to HF Spaces main branch (force push to overwrite)
+          echo "🚀 Pushing to Hugging Face Space..."
+          git push hf_space HEAD:main --force --verbose
+          echo "✅ Successfully pushed to Hugging Face Space!"
