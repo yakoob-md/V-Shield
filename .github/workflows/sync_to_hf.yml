@@ -14,9 +14,14 @@ jobs:
           fetch-depth: 0
           lfs: true
 
+      - name: Configure git identity
+        run: |
+          git config --global user.email "deploy@github-actions.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Replace yakoob-md/v-shield-ai with your actual HF username and Space name
-          git push --force https://yakub-md:$HF_TOKEN@huggingface.co/spaces/yakub-md/v-shield HEAD:main
+          git push --force https://yakub-md:${HF_TOKEN}@huggingface.co/spaces/yakub-md/v-shield HEAD:main
+
