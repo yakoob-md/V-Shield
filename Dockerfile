@@ -22,9 +22,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the vector DB builder and preloader
+# Copy the vector DB builder, preloader, and demo seeder
 COPY build_vector_db.py .
 COPY preload_model.py .
+COPY seed_demo_db.py .
 
 # ── Cache the embedding model weights inside the image layer ──────────────────
 # This runs ONCE at build time so startup is instant.
@@ -33,6 +34,12 @@ RUN python preload_model.py
 # ── Build the FAISS index inside the image ─────────────────────────────────────
 # All data is embedded in build_vector_db.py – no external files needed.
 RUN python build_vector_db.py
+
+# ── Seed the SQLite database with demo conversations ──────────────────────────
+# Bakes 4 realistic chat conversations into the image so recruiters always
+# see a professional, pre-populated demo on first load. Never overwrites
+# real user data (only seeds if DB is empty).
+RUN python seed_demo_db.py
 
 # ── Copy built frontend and backend ───────────────────────────────────────────
 COPY frontend/dist ./frontend/dist

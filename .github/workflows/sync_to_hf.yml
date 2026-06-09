@@ -56,6 +56,7 @@ jobs:
           cp main.py            /tmp/hf-deploy/
           cp preload_model.py   /tmp/hf-deploy/
           cp build_vector_db.py /tmp/hf-deploy/
+          cp seed_demo_db.py    /tmp/hf-deploy/
 
           # Built frontend
           mkdir -p /tmp/hf-deploy/frontend/dist

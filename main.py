@@ -446,7 +446,7 @@ def fetch_chat_detail(chat_id: int) -> Optional[dict]:
             messages = conn.execute(
                 "SELECT id, role, content, risk_level, language, timestamp FROM messages WHERE chat_id = ? ORDER BY id ASC",
                 (chat_id,)
-            )
+            ).fetchall()
             
     formatted_messages = []
     for m in messages:
