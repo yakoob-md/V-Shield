@@ -75,7 +75,7 @@ const App: React.FC = () => {
     }
 
     console.log("Narration clicked", text); // For debugging logic as requested
-    const url = `http://localhost:8000/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`;
+    const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`;
     const audio = new Audio(url);
     audioRef.current = audio;
     setActivePlayingId(msgId);

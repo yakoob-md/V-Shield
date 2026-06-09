@@ -84,6 +84,7 @@ npm install
 uvicorn main:app --reload
 
 # 4. Launch (Terminal 2)
+
 npm run dev
 ```
 

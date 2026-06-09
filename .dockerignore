@@ -1,0 +1,14 @@
+.git
+.gitignore
+.env
+doping_venv
+frontend/node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.cache
+.pytest_cache
+.gemini
+*.log
+*.db-journal

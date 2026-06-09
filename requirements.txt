@@ -3,6 +3,7 @@ uvicorn
 python-multipart
 sentence-transformers
 faiss-cpu
-groq
+groq>=1.0.0
 gTTS
 python-dotenv
+psycopg2-binary
