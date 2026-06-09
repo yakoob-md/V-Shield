@@ -2,8 +2,6 @@
 FROM python:3.10-slim
 
 # Set environment variables
-# HF_HOME configures huggingface cache directory inside the container,
-# which ensures baked-in weights are loaded instantly.
 ENV PYTHONUNBUFFERED=1 \
     PORT=7860 \
     FAISS_INDEX_PATH=faiss_index.bin \
@@ -14,7 +12,7 @@ ENV PYTHONUNBUFFERED=1 \
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies (build-essential for compiling, curl for Docker health check)
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -24,26 +22,27 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy model preloader script and cache embedding model weights inside Docker layer
+# Copy the vector DB builder and preloader
+COPY build_vector_db.py .
 COPY preload_model.py .
+
+# ── Cache the embedding model weights inside the image layer ──────────────────
+# This runs ONCE at build time so startup is instant.
 RUN python preload_model.py
 
-# Copy built frontend assets
+# ── Build the FAISS index inside the image ─────────────────────────────────────
+# All data is embedded in build_vector_db.py – no external files needed.
+RUN python build_vector_db.py
+
+# ── Copy built frontend and backend ───────────────────────────────────────────
 COPY frontend/dist ./frontend/dist
-
-# Copy backend application code
 COPY main.py .
-COPY build_vector_db.py .
-COPY faiss_index.bin .
-COPY chunks.pkl .
-COPY chats_v2.db .
-COPY datasets.json .
 
-# Expose the port (Hugging Face Space default port is 7860)
+# Expose the HF Spaces default port
 EXPOSE 7860
 
-# Docker Healthcheck to detect hung containers
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# Docker Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:7860/health || exit 1
 
 # Run uvicorn server on port 7860

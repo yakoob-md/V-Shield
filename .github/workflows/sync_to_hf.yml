@@ -13,32 +13,61 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
 
-      - name: Configure git identity
+      - name: Set up Node.js (for frontend build)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build frontend
         run: |
-          git config --global user.email "ci@github-actions.com"
-          git config --global user.name "GitHub Actions Bot"
+          cd frontend
+          npm ci
+          npm run build
+          echo "✅ Frontend built successfully"
+          ls -la dist/
 
-      - name: Add Hugging Face remote and push
+      - name: Create clean HF deployment directory
+        run: |
+          mkdir -p /tmp/hf-deploy
+
+          # --- Backend files ---
+          cp Dockerfile         /tmp/hf-deploy/
+          cp requirements.txt   /tmp/hf-deploy/
+          cp main.py            /tmp/hf-deploy/
+          cp preload_model.py   /tmp/hf-deploy/
+          cp build_vector_db.py /tmp/hf-deploy/
+
+          # --- Built frontend ---
+          mkdir -p /tmp/hf-deploy/frontend/dist
+          cp -r frontend/dist/. /tmp/hf-deploy/frontend/dist/
+
+          echo "📦 Files prepared for HF deployment:"
+          find /tmp/hf-deploy -type f | sort
+
+      - name: Push clean deployment to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Validate token is present
           if [ -z "$HF_TOKEN" ]; then
-            echo "❌ ERROR: HF_TOKEN secret is not set in GitHub repository secrets!"
+            echo "❌ ERROR: HF_TOKEN secret is not set!"
             exit 1
           fi
           echo "✅ HF_TOKEN is set (length: ${#HF_TOKEN})"
 
-          # Set HF as a named remote to avoid credential issues with inline URLs
-          git remote add hf_space "https://yakub-md:${HF_TOKEN}@huggingface.co/spaces/yakub-md/v-shield"
+          cd /tmp/hf-deploy
 
-          # Verify remote was added
-          echo "📡 Configured remotes:"
-          git remote -v | grep -v "HF_TOKEN" | sed 's/:[^@]*@/:***@/g'
+          git init
+          git checkout -b main
+          git config user.email "ci@github-actions.com"
+          git config user.name "GitHub Actions Bot"
 
-          # Push to HF Spaces main branch (force push to overwrite)
+          git add .
+          git status
+          git commit -m "Deploy V-Shield AI to HF Spaces [$(date -u +%Y-%m-%dT%H:%M:%SZ)]"
+
           echo "🚀 Pushing to Hugging Face Space..."
-          git push hf_space HEAD:main --force --verbose
-          echo "✅ Successfully pushed to Hugging Face Space!"
+          git push --force \
+            "https://yakub-md:${HF_TOKEN}@huggingface.co/spaces/yakub-md/v-shield" \
+            main:main
+          echo "✅ Successfully deployed to Hugging Face Space!"
