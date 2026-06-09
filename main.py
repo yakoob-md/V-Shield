@@ -68,11 +68,12 @@ log = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class AppState:
-    faiss_index: Optional[faiss.Index]       = None
-    chunks:      Optional[list[str]]         = None
-    embedder:    Optional[SentenceTransformer] = None
-    groq_client: Optional[Groq]              = None
-    pg_pool:     Optional[ThreadedConnectionPool] = None
+    faiss_index:  Optional[faiss.Index]            = None
+    chunks:       Optional[list[str]]              = None
+    embedder:     Optional[SentenceTransformer]    = None
+    groq_client:  Optional[Groq]                   = None
+    pg_pool:      Optional[ThreadedConnectionPool] = None
+    use_postgres: bool                             = IS_POSTGRES  # can flip to False at runtime
 
 state = AppState()
 
@@ -122,7 +123,7 @@ async def lifespan(app: FastAPI):
 
     # 1. DB connection pool setup & migrations
     db_start = time.time()
-    if IS_POSTGRES:
+    if state.use_postgres:
         url = DATABASE_URL
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
@@ -130,21 +131,25 @@ async def lifespan(app: FastAPI):
             state.pg_pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=url)
             log.info("✅ PostgreSQL Connection Pool initialized successfully")
         except Exception as e:
-            log.critical(f"💥 Failed to initialize PostgreSQL pool: {e}")
-            raise RuntimeError(f"Database Pool Initialization Failure: {e}")
-            
+            log.warning(
+                f"⚠️  PostgreSQL unreachable — falling back to SQLite.\n"
+                f"    Reason: {e}\n"
+                f"    This is expected on HF Spaces free tier (no outbound IPv6)."
+            )
+            state.use_postgres = False
+            state.pg_pool = None
+
     try:
         init_db()
-        # Verify connectivity
         with db_session() as conn:
-            if IS_POSTGRES:
+            if state.use_postgres:
                 cur = conn.cursor()
                 cur.execute("SELECT 1")
                 cur.fetchone()
             else:
                 conn.execute("SELECT 1").fetchone()
         db_init_time = time.time() - db_start
-        db_type = "PostgreSQL" if IS_POSTGRES else "SQLite"
+        db_type = "PostgreSQL" if state.use_postgres else "SQLite"
         log.info(f"✅ Database initialised ({db_type}) & connectivity verified in {db_init_time:.4f}s")
     except Exception as e:
         log.critical(f"💥 Database startup check failed: {e}")
@@ -216,7 +221,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Clean up pg pool on shutdown
-    if IS_POSTGRES and state.pg_pool is not None:
+    if state.use_postgres and state.pg_pool is not None:
         log.info("⏳ Closing PostgreSQL Connection Pool...")
         try:
             state.pg_pool.closeall()
@@ -281,7 +286,7 @@ async def database_connection_error_handler(request: Request, exc: DatabaseConne
 def db_session():
     conn = None
     try:
-        if IS_POSTGRES:
+        if state.use_postgres:
             if state.pg_pool is None:
                 raise RuntimeError("PostgreSQL Connection Pool is not initialized")
             conn = state.pg_pool.getconn()
@@ -294,7 +299,7 @@ def db_session():
             yield conn
             conn.commit()
     except Exception as e:
-        if conn and IS_POSTGRES:
+        if conn and state.use_postgres:
             try:
                 conn.rollback()
             except Exception as rollback_err:
@@ -303,7 +308,7 @@ def db_session():
         raise DatabaseConnectionError(str(e))
     finally:
         if conn:
-            if IS_POSTGRES:
+            if state.use_postgres:
                 try:
                     state.pg_pool.putconn(conn)
                 except Exception as put_err:
@@ -316,7 +321,7 @@ def db_session():
 
 def init_db():
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor()
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS chats (
@@ -360,7 +365,7 @@ def init_db():
 
 def create_new_chat(title: str = "New Chat") -> int:
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor()
             cur.execute("INSERT INTO chats (title) VALUES (%s) RETURNING id", (title,))
             lastrowid = cur.fetchone()[0]
@@ -371,7 +376,7 @@ def create_new_chat(title: str = "New Chat") -> int:
 
 def update_chat_title(chat_id: int, title: str):
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor()
             cur.execute("UPDATE chats SET title = %s WHERE id = %s", (title, chat_id))
         else:
@@ -379,7 +384,7 @@ def update_chat_title(chat_id: int, title: str):
 
 def save_message(chat_id: int, role: str, content: str, language: str = "hindi", risk_level: str = "unknown"):
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO messages (chat_id, role, content, language, risk_level) VALUES (%s, %s, %s, %s, %s)",
@@ -393,7 +398,7 @@ def save_message(chat_id: int, role: str, content: str, language: str = "hindi",
 
 def fetch_chat_context(chat_id: int, limit: int = MEMORY_WINDOW) -> list[dict]:
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor(cursor_factory=DictCursor)
             cur.execute(
                 "SELECT role, content FROM messages WHERE chat_id = %s ORDER BY id DESC LIMIT %s",
@@ -409,7 +414,7 @@ def fetch_chat_context(chat_id: int, limit: int = MEMORY_WINDOW) -> list[dict]:
 
 def fetch_all_chats() -> list[dict]:
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor(cursor_factory=DictCursor)
             cur.execute("SELECT id, title, created_at FROM chats ORDER BY created_at DESC")
             rows = cur.fetchall()
@@ -425,7 +430,7 @@ def fetch_all_chats() -> list[dict]:
 
 def fetch_chat_detail(chat_id: int) -> Optional[dict]:
     with db_session() as conn:
-        if IS_POSTGRES:
+        if state.use_postgres:
             cur = conn.cursor(cursor_factory=DictCursor)
             cur.execute("SELECT id, title, created_at FROM chats WHERE id = %s", (chat_id,))
             chat = cur.fetchone()
@@ -470,7 +475,7 @@ def fetch_chat_detail(chat_id: int) -> Optional[dict]:
 def delete_chat_session(chat_id: int) -> bool:
     try:
         with db_session() as conn:
-            if IS_POSTGRES:
+            if state.use_postgres:
                 cur = conn.cursor()
                 cur.execute("DELETE FROM chats WHERE id = %s", (chat_id,))
                 rowcount = cur.rowcount
@@ -485,7 +490,7 @@ def delete_chat_session(chat_id: int) -> bool:
 def get_db_row_count() -> int:
     try:
         with db_session() as conn:
-            if IS_POSTGRES:
+            if state.use_postgres:
                 cur = conn.cursor()
                 cur.execute("SELECT COUNT(*) FROM messages")
                 return cur.fetchone()[0]
@@ -744,7 +749,7 @@ async def check_faiss():
 async def check_db():
     try:
         with db_session() as conn:
-            if IS_POSTGRES:
+            if state.use_postgres:
                 cur = conn.cursor()
                 cur.execute("SELECT 1")
                 cur.fetchone()
