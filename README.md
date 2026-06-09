@@ -1,5 +1,6 @@
 # 🛡️ V-Shield AI: Vernacular Anti-Doping Assistant
 
+**🌟 LIVE DEMO:** [https://huggingface.co/spaces/yakub-md/v-shield](https://huggingface.co/spaces/yakub-md/v-shield)
 
 [![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen.svg)](https://github.com/yakoob-md/v-shield-ai)
 [![Stack: FastAPI + React + FAISS](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20FAISS-blue.svg)](https://fastapi.tiangolo.com/)
