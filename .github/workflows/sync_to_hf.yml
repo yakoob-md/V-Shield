@@ -31,14 +31,33 @@ jobs:
         run: |
           mkdir -p /tmp/hf-deploy
 
-          # --- Backend files ---
+          # HF Spaces requires README.md with YAML frontmatter (no leading spaces!)
+          printf '%s\n' \
+            '---' \
+            'title: V-Shield AI' \
+            'emoji: 🛡️' \
+            'colorFrom: indigo' \
+            'colorTo: cyan' \
+            'sdk: docker' \
+            'pinned: false' \
+            '---' \
+            '' \
+            '# 🛡️ V-Shield AI: Vernacular Anti-Doping Assistant' \
+            'A voice-first RAG assistant that protects Indian athletes from unintentional doping.' \
+            > /tmp/hf-deploy/README.md
+
+          echo "--- README.md contents ---"
+          cat /tmp/hf-deploy/README.md
+          echo "--------------------------"
+
+          # Backend files
           cp Dockerfile         /tmp/hf-deploy/
           cp requirements.txt   /tmp/hf-deploy/
           cp main.py            /tmp/hf-deploy/
           cp preload_model.py   /tmp/hf-deploy/
           cp build_vector_db.py /tmp/hf-deploy/
 
-          # --- Built frontend ---
+          # Built frontend
           mkdir -p /tmp/hf-deploy/frontend/dist
           cp -r frontend/dist/. /tmp/hf-deploy/frontend/dist/
 
